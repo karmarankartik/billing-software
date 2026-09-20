@@ -1,0 +1,1 @@
+package com.ubiqedge.billing_software.dto; import java.math.BigDecimal; public record UpdateBillingPlanRequest( String name, String code, String description, BigDecimal pricePerUnit, boolean active ) {}
