@@ -24,7 +24,7 @@ public class AdminInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
 
-        if(!userRepository.existsByUsername(SEED_ADMIN_USERNAME)){
+        if(!userRepository.existsByUsernameAndDeletedAtIsNull(SEED_ADMIN_USERNAME)){
             String passwordHash = Password.hash(SEED_ADMIN_PASSWORD).withArgon2().getResult();
             User admin = new User();
             admin.setUsername(SEED_ADMIN_USERNAME);

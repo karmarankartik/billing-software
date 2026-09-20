@@ -2,11 +2,10 @@ package com.ubiqedge.billing_software.repository;
 
 import com.ubiqedge.billing_software.entity.WaterMeterBillingPlan;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,44 +13,37 @@ import java.util.UUID;
 public interface WaterMeterBillingPlanRepository
         extends JpaRepository<WaterMeterBillingPlan, UUID> {
 
-    @Query(value = """
-            SELECT *
-            FROM water_meter_billing_plans
-            WHERE water_meter_id = :waterMeterId
-              AND effective_to IS NULL
-              AND active_plan_key = :waterMeterId
-            """, nativeQuery = true)
-    Optional<WaterMeterBillingPlan> findActiveByWaterMeterId(
-            @Param("waterMeterId") UUID waterMeterId
+    Optional<WaterMeterBillingPlan> findByWaterMeterIdAndEffectiveToIsNull(
+            UUID waterMeterId
     );
 
-    @Modifying
-    @Query(value = """
-            UPDATE water_meter_billing_plans
-            SET effective_to = :effectiveTo,
-                active_plan_key = NULL
-            WHERE water_meter_id = :waterMeterId
-              AND effective_to IS NULL
-            """, nativeQuery = true)
-    int closeActivePlan(
+    List<WaterMeterBillingPlan> findByWaterMeterIdOrderByEffectiveFromDesc(
+            UUID waterMeterId
+    );
+
+    @Query("""
+        SELECT p
+        FROM WaterMeterBillingPlan p
+        WHERE p.waterMeterId = :waterMeterId
+          AND p.effectiveFrom <= :pointInTime
+          AND (p.effectiveTo IS NULL OR p.effectiveTo > :pointInTime)
+        ORDER BY p.effectiveFrom DESC
+        """)
+    Optional<WaterMeterBillingPlan> findPlanAt(
             @Param("waterMeterId") UUID waterMeterId,
-            @Param("effectiveTo") Instant effectiveTo
+            @Param("pointInTime") OffsetDateTime pointInTime
     );
 
-
-    @Query(value = """
-        SELECT *
-        FROM water_meter_billing_plans
-        WHERE water_meter_id = :waterMeterId
-          AND effective_from < :periodEnd
-          AND (effective_to IS NULL OR effective_to > :periodStart)
-        ORDER BY effective_from
-        """, nativeQuery = true)
-    List<WaterMeterBillingPlan> findPlansForPeriod(
+    @Query("""
+        SELECT COUNT(p)
+        FROM WaterMeterBillingPlan p
+        WHERE p.waterMeterId = :waterMeterId
+          AND p.effectiveFrom < :periodEnd
+          AND (p.effectiveTo IS NULL OR p.effectiveTo > :periodStart)
+        """)
+    long countOverlappingPlans(
             @Param("waterMeterId") UUID waterMeterId,
-            @Param("periodStart") Instant periodStart,
-            @Param("periodEnd") Instant periodEnd
+            @Param("periodStart") OffsetDateTime periodStart,
+            @Param("periodEnd") OffsetDateTime periodEnd
     );
-
-
 }

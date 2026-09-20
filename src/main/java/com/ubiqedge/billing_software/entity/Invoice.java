@@ -1,9 +1,9 @@
 package com.ubiqedge.billing_software.entity;
 
-
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -16,6 +16,7 @@ import java.util.UUID;
 public class Invoice {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "water_meter_id", nullable = false)
@@ -29,6 +30,12 @@ public class Invoice {
 
     @Column(name = "billing_year", nullable = false)
     private Integer billingYear;
+
+    @Column(name = "billing_period_start", nullable = false)
+    private Instant billingPeriodStart;
+
+    @Column(name = "billing_period_end", nullable = false)
+    private Instant billingPeriodEnd;
 
     @Column(name = "total_consumption", nullable = false, precision = 19, scale = 6)
     private BigDecimal totalConsumption;
@@ -85,6 +92,22 @@ public class Invoice {
         this.billingYear = billingYear;
     }
 
+    public Instant getBillingPeriodStart() {
+        return billingPeriodStart;
+    }
+
+    public void setBillingPeriodStart(Instant billingPeriodStart) {
+        this.billingPeriodStart = billingPeriodStart;
+    }
+
+    public Instant getBillingPeriodEnd() {
+        return billingPeriodEnd;
+    }
+
+    public void setBillingPeriodEnd(Instant billingPeriodEnd) {
+        this.billingPeriodEnd = billingPeriodEnd;
+    }
+
     public BigDecimal getTotalConsumption() {
         return totalConsumption;
     }
@@ -117,4 +140,3 @@ public class Invoice {
         this.generatedBy = generatedBy;
     }
 }
-

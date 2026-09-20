@@ -17,17 +17,17 @@ public interface SessionRepository extends JpaRepository<UserSession, UUID> {
     @Query(value = """
             UPDATE user_sessions
             SET revoked_at = CURRENT_TIMESTAMP
-            WHERE token = :tokenHash
+            WHERE token = :token
               AND revoked_at IS NULL
             """, nativeQuery = true)
-    int revokeSession(@Param("tokenHash") String tokenHash);
+    int revokeSession(@Param("token") String token);
 
     @Query(value = """
         SELECT *
         FROM user_sessions
-        WHERE token_hash = :tokenHash
+        WHERE token = :token
           AND revoked_at IS NULL
         """, nativeQuery = true)
     Optional<UserSession> findActiveSession(
-            @Param("tokenHash") String tokenHash);
+            @Param("token") String token);
 }

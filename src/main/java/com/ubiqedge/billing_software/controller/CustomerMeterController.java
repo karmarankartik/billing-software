@@ -1,3 +1,4 @@
+/*
 package com.ubiqedge.billing_software.controller;
 
 import com.ubiqedge.billing_software.dto.WaterMeterResponse;
@@ -5,6 +6,7 @@ import com.ubiqedge.billing_software.entity.User;
 import com.ubiqedge.billing_software.entity.UserSession;
 import com.ubiqedge.billing_software.dto.ApiResponse;
 import com.ubiqedge.billing_software.service.CustomerMeterService;
+import com.ubiqedge.billing_software.service.WaterMeterService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,12 +20,12 @@ import static com.ubiqedge.billing_software.constant.AppConstant.SUCCESS;
 @RequestMapping("/api/customer/meters")
 public class CustomerMeterController {
 
-    private final CustomerMeterService customerMeterService;
+    private final WaterMeterService watMeterService;
 
     public CustomerMeterController(
-            CustomerMeterService customerMeterService) {
+            WaterMeterService watMeterService) {
 
-        this.customerMeterService = customerMeterService;
+        this.watMeterService = watMeterService;
     }
 
     @GetMapping
@@ -32,7 +34,7 @@ public class CustomerMeterController {
             @RequestAttribute("user") User user) {
 
         List<WaterMeterResponse> response =
-                customerMeterService.getMyMeters(
+                watMeterService.getMyMeters(
                         userSession,
                         user
                 );
@@ -54,7 +56,7 @@ public class CustomerMeterController {
             @PathVariable UUID waterMeterId) {
 
         WaterMeterResponse response =
-                customerMeterService.getMyMeter(
+                watMeterService.getMyMeter(
                         userSession,
                         user,
                         waterMeterId
@@ -71,3 +73,4 @@ public class CustomerMeterController {
     }
 }
 
+*/

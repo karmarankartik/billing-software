@@ -1,7 +1,11 @@
 package com.ubiqedge.billing_software.entity;
 
-
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -9,6 +13,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "user_sessions")
 public class UserSession {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -16,7 +21,7 @@ public class UserSession {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @Column(nullable = false,unique = true,length = 255)
+    @Column(name = "token", nullable = false, unique = true, length = 255)
     private String token;
 
     @Column(name = "created_at", nullable = false)
@@ -28,14 +33,7 @@ public class UserSession {
     @Column(name = "revoked_at")
     private Instant revokedAt;
 
-    public UserSession(){}
-
-    public UUID getUserId() {
-        return userId;
-    }
-
-    public void setUserId(UUID userId) {
-        this.userId = userId;
+    public UserSession() {
     }
 
     public UUID getId() {
@@ -44,6 +42,14 @@ public class UserSession {
 
     public void setId(UUID id) {
         this.id = id;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
     }
 
     public String getToken() {

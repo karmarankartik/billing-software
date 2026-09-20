@@ -7,7 +7,11 @@ public record WaterMeterResponse(
         UUID id,
         String meterNumber,
         UUID billingPlanId,
+        UUID createdBy,
         Instant createdAt,
+        UUID updatedBy,
         Instant updatedAt
 ) {
 }
+
+

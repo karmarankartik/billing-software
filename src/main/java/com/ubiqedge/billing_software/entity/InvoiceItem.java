@@ -1,9 +1,9 @@
 package com.ubiqedge.billing_software.entity;
 
-
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -16,6 +16,7 @@ import java.util.UUID;
 public class InvoiceItem {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "invoice_id", nullable = false)
@@ -32,6 +33,15 @@ public class InvoiceItem {
 
     @Column(name = "billing_plan_id", nullable = false)
     private UUID billingPlanId;
+
+    @Column(name = "billing_plan_slab_id")
+    private UUID billingPlanSlabId;
+
+    @Column(name = "slab_lower_bound", precision = 19, scale = 6)
+    private BigDecimal slabLowerBound;
+
+    @Column(name = "slab_upper_bound", precision = 19, scale = 6)
+    private BigDecimal slabUpperBound;
 
     @Column(name = "price_per_unit", nullable = false, precision = 19, scale = 4)
     private BigDecimal pricePerUnit;
@@ -96,6 +106,30 @@ public class InvoiceItem {
         this.billingPlanId = billingPlanId;
     }
 
+    public UUID getBillingPlanSlabId() {
+        return billingPlanSlabId;
+    }
+
+    public void setBillingPlanSlabId(UUID billingPlanSlabId) {
+        this.billingPlanSlabId = billingPlanSlabId;
+    }
+
+    public BigDecimal getSlabLowerBound() {
+        return slabLowerBound;
+    }
+
+    public void setSlabLowerBound(BigDecimal slabLowerBound) {
+        this.slabLowerBound = slabLowerBound;
+    }
+
+    public BigDecimal getSlabUpperBound() {
+        return slabUpperBound;
+    }
+
+    public void setSlabUpperBound(BigDecimal slabUpperBound) {
+        this.slabUpperBound = slabUpperBound;
+    }
+
     public BigDecimal getPricePerUnit() {
         return pricePerUnit;
     }
@@ -128,4 +162,3 @@ public class InvoiceItem {
         this.periodTo = periodTo;
     }
 }
-

@@ -1,3 +1,4 @@
+/*
 package com.ubiqedge.billing_software.service;
 
 import com.ubiqedge.billing_software.dto.InvoiceResponse;
@@ -253,11 +254,13 @@ public class InvoiceService {
         try {
             invoiceRepository.saveAndFlush(invoice);
         } catch (DataIntegrityViolationException exception) {
-            /*
+            */
+/*
              * Another request may have generated the same invoice
              * concurrently. The database unique constraint protects
              * against duplicate invoices.
-             */
+             *//*
+
         }
     }
 
@@ -309,4 +312,4 @@ public class InvoiceService {
                 invoice.getGeneratedAt()
         );
     }
-}
+}*/

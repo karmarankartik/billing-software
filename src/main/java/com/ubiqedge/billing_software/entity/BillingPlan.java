@@ -2,6 +2,8 @@ package com.ubiqedge.billing_software.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -14,6 +16,7 @@ import java.util.UUID;
 public class BillingPlan {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "name", nullable = false, length = 100)
@@ -25,7 +28,10 @@ public class BillingPlan {
     @Column(name = "description", length = 500)
     private String description;
 
-    @Column(name = "price_per_unit", nullable = false, precision = 19, scale = 4)
+    @Column(name = "plan_type", nullable = false, length = 20)
+    private String planType;
+
+    @Column(name = "price_per_unit", precision = 19, scale = 4)
     private BigDecimal pricePerUnit;
 
     @Column(name = "active", nullable = false)
@@ -79,6 +85,14 @@ public class BillingPlan {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getPlanType() {
+        return planType;
+    }
+
+    public void setPlanType(String planType) {
+        this.planType = planType;
     }
 
     public BigDecimal getPricePerUnit() {

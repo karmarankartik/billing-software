@@ -2,6 +2,8 @@ package com.ubiqedge.billing_software.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -13,9 +15,10 @@ import java.util.UUID;
 public class WaterMeter {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "meter_number", nullable = false, length = 100)
+    @Column(name = "meter_number", nullable = false, unique = true, length = 100)
     private String meterNumber;
 
     @Column(name = "created_by", nullable = false)

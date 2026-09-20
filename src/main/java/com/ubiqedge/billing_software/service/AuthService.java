@@ -32,7 +32,7 @@ public class AuthService {
 
 
     public LoginResponse login(LoginRequest loginRequest)  {
-        User user = userRepository.findActiveUserByName(loginRequest.username()).orElseThrow(() ->
+        User user = userRepository.findByUsernameAndDeletedAtIsNull(loginRequest.username()).orElseThrow(() ->
                 new ApiException(INVALID_USERNAME_PASSWORD, HttpStatus.BAD_REQUEST));
 
         boolean validPassword = Password.check(loginRequest.password(),user.getPasswordHash()).withArgon2();

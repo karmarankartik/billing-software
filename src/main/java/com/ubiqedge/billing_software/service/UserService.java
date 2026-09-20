@@ -33,7 +33,7 @@ public class UserService {
         validateAdmin(userSession, loggedInUser);
         validateRole(request.role());
 
-        if (userRepository.existsByUsername(request.username())) {
+        if (userRepository.existsByUsernameAndDeletedAtIsNull(request.username())) {
             throw new ApiException(
                     USERNAME_ALREADY_EXISTS,
                     HttpStatus.BAD_REQUEST
@@ -66,7 +66,7 @@ public class UserService {
 
         validateAdmin(userSession, loggedInUser);
 
-        User user = userRepository.findActiveUserById(id)
+        User user = userRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new ApiException(
                         USER_NOT_FOUND,
                         HttpStatus.BAD_REQUEST
@@ -84,14 +84,14 @@ public class UserService {
         validateAdmin(userSession, loggedInUser);
         validateRole(request.role());
 
-        User user = userRepository.findActiveUserById(id)
+        User user = userRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new ApiException(
                         USER_NOT_FOUND,
                         HttpStatus.BAD_REQUEST
                 ));
 
         if (!user.getUsername().equals(request.username())
-                && userRepository.existsByUsername(request.username())) {
+                && userRepository.existsByUsernameAndDeletedAtIsNull(request.username())) {
 
             throw new ApiException(
                     USERNAME_ALREADY_EXISTS,
@@ -125,7 +125,7 @@ public class UserService {
 
         validateAdmin(userSession, loggedInUser);
 
-        User user = userRepository.findActiveUserById(id)
+        User user = userRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new ApiException(
                         USER_NOT_FOUND,
                         HttpStatus.BAD_REQUEST

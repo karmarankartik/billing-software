@@ -47,7 +47,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
         UserSession session =
                 authenticationService.validateSession(token);
 
-        User user = userRepository.findActiveUserById(session.getUserId())
+        User user = userRepository.findByIdAndDeletedAtIsNull(session.getUserId())
                 .orElseThrow(() -> new ApiException(
                         INVALID_SESSION,
                         HttpStatus.BAD_REQUEST

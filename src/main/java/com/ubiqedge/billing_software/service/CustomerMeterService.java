@@ -1,3 +1,4 @@
+/*
 package com.ubiqedge.billing_software.service;
 
 
@@ -66,7 +67,8 @@ public class CustomerMeterService {
                 meter.getMeterNumber(),
                 meter.getBillingPlanId(),
                 meter.getCreatedAt(),
-                meter.getUpdatedAt()
+                waterMeter.getUpdatedBy(), meter.getUpdatedAt()
         );
     }
 }
+*/

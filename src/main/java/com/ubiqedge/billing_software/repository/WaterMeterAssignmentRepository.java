@@ -1,14 +1,11 @@
 package com.ubiqedge.billing_software.repository;
 
-
-
 import com.ubiqedge.billing_software.entity.WaterMeterAssignment;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,56 +13,43 @@ import java.util.UUID;
 public interface WaterMeterAssignmentRepository
         extends JpaRepository<WaterMeterAssignment, UUID> {
 
-    @Query(value = """
-            SELECT *
-            FROM water_meter_assignments
-            WHERE water_meter_id = :waterMeterId
-              AND unassigned_at IS NULL
-              AND active_assignment_key = :waterMeterId
-            """, nativeQuery = true)
-    Optional<WaterMeterAssignment> findActiveByWaterMeterId(
-            @Param("waterMeterId") UUID waterMeterId
+    Optional<WaterMeterAssignment> findByActiveAssignmentKey(UUID activeAssignmentKey);
+
+    Optional<WaterMeterAssignment> findByWaterMeterIdAndUnassignedAtIsNull(
+            UUID waterMeterId
     );
 
-    @Query(value = """
-            SELECT *
-            FROM water_meter_assignments
-            WHERE user_id = :userId
-              AND unassigned_at IS NULL
-            ORDER BY assigned_at DESC
-            """, nativeQuery = true)
-    List<WaterMeterAssignment> findActiveByUserId(
-            @Param("userId") UUID userId
+    List<WaterMeterAssignment> findByWaterMeterIdOrderByAssignedAtDesc(
+            UUID waterMeterId
     );
 
-    @Modifying
-    @Query(value = """
-            UPDATE water_meter_assignments
-            SET unassigned_at = :unassignedAt,
-                active_assignment_key = NULL
-            WHERE water_meter_id = :waterMeterId
-              AND unassigned_at IS NULL
-            """, nativeQuery = true)
-    int unassignActiveMeter(
+    List<WaterMeterAssignment> findByUserIdOrderByAssignedAtDesc(
+            UUID userId
+    );
+
+    @Query("""
+        SELECT a
+        FROM WaterMeterAssignment a
+        WHERE a.waterMeterId = :waterMeterId
+          AND a.assignedAt <= :pointInTime
+          AND (a.unassignedAt IS NULL OR a.unassignedAt > :pointInTime)
+        ORDER BY a.assignedAt DESC
+        """)
+    Optional<WaterMeterAssignment> findAssignmentAt(
             @Param("waterMeterId") UUID waterMeterId,
-            @Param("unassignedAt") Instant unassignedAt
+            @Param("pointInTime") OffsetDateTime pointInTime
     );
 
-
-    @Query(value = """
-        SELECT *
-        FROM water_meter_assignments
-        WHERE water_meter_id = :waterMeterId
-          AND assigned_at < :periodEnd
-          AND (unassigned_at IS NULL OR unassigned_at > :periodStart)
-        ORDER BY assigned_at
-        """, nativeQuery = true)
-    List<WaterMeterAssignment> findAssignmentsForPeriod(
+    @Query("""
+        SELECT COUNT(a)
+        FROM WaterMeterAssignment a
+        WHERE a.waterMeterId = :waterMeterId
+          AND a.assignedAt < :periodEnd
+          AND (a.unassignedAt IS NULL OR a.unassignedAt > :periodStart)
+        """)
+    long countOverlappingAssignments(
             @Param("waterMeterId") UUID waterMeterId,
-            @Param("periodStart") Instant periodStart,
-            @Param("periodEnd") Instant periodEnd
+            @Param("periodStart") OffsetDateTime periodStart,
+            @Param("periodEnd") OffsetDateTime periodEnd
     );
-
-
 }
-

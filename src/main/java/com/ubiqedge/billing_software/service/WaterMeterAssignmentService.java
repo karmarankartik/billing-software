@@ -1,3 +1,4 @@
+/*
 package com.ubiqedge.billing_software.service;
 
 
@@ -138,3 +139,4 @@ public class WaterMeterAssignmentService {
         }
     }
 }
+*/
