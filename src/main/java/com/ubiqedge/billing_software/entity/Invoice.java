@@ -1,14 +1,11 @@
 package com.ubiqedge.billing_software.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import org.hibernate.generator.EventType;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
@@ -19,23 +16,20 @@ public class Invoice {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "water_meter_id", nullable = false)
-    private UUID waterMeterId;
-
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @Column(name = "billing_month", nullable = false)
-    private Integer billingMonth;
+    @Column(name = "water_meter_id", nullable = false)
+    private UUID waterMeterId;
 
-    @Column(name = "billing_year", nullable = false)
-    private Integer billingYear;
+    @Column(name = "assignment_id", nullable = false)
+    private UUID assignmentId;
 
     @Column(name = "billing_period_start", nullable = false)
-    private Instant billingPeriodStart;
+    private LocalDate billingPeriodStart;
 
     @Column(name = "billing_period_end", nullable = false)
-    private Instant billingPeriodEnd;
+    private LocalDate billingPeriodEnd;
 
     @Column(name = "total_consumption", nullable = false, precision = 19, scale = 6)
     private BigDecimal totalConsumption;
@@ -46,8 +40,8 @@ public class Invoice {
     @Column(name = "generated_at", nullable = false)
     private Instant generatedAt;
 
-    @Column(name = "generated_by", nullable = false)
-    private UUID generatedBy;
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
 
     public Invoice() {
     }
@@ -60,14 +54,6 @@ public class Invoice {
         this.id = id;
     }
 
-    public UUID getWaterMeterId() {
-        return waterMeterId;
-    }
-
-    public void setWaterMeterId(UUID waterMeterId) {
-        this.waterMeterId = waterMeterId;
-    }
-
     public UUID getUserId() {
         return userId;
     }
@@ -76,35 +62,35 @@ public class Invoice {
         this.userId = userId;
     }
 
-    public Integer getBillingMonth() {
-        return billingMonth;
+    public UUID getWaterMeterId() {
+        return waterMeterId;
     }
 
-    public void setBillingMonth(Integer billingMonth) {
-        this.billingMonth = billingMonth;
+    public void setWaterMeterId(UUID waterMeterId) {
+        this.waterMeterId = waterMeterId;
     }
 
-    public Integer getBillingYear() {
-        return billingYear;
+    public UUID getAssignmentId() {
+        return assignmentId;
     }
 
-    public void setBillingYear(Integer billingYear) {
-        this.billingYear = billingYear;
+    public void setAssignmentId(UUID assignmentId) {
+        this.assignmentId = assignmentId;
     }
 
-    public Instant getBillingPeriodStart() {
+    public LocalDate getBillingPeriodStart() {
         return billingPeriodStart;
     }
 
-    public void setBillingPeriodStart(Instant billingPeriodStart) {
+    public void setBillingPeriodStart(LocalDate billingPeriodStart) {
         this.billingPeriodStart = billingPeriodStart;
     }
 
-    public Instant getBillingPeriodEnd() {
+    public LocalDate getBillingPeriodEnd() {
         return billingPeriodEnd;
     }
 
-    public void setBillingPeriodEnd(Instant billingPeriodEnd) {
+    public void setBillingPeriodEnd(LocalDate billingPeriodEnd) {
         this.billingPeriodEnd = billingPeriodEnd;
     }
 
@@ -132,11 +118,13 @@ public class Invoice {
         this.generatedAt = generatedAt;
     }
 
-    public UUID getGeneratedBy() {
-        return generatedBy;
+    public Instant getCreatedAt() {
+        return createdAt;
     }
 
-    public void setGeneratedBy(UUID generatedBy) {
-        this.generatedBy = generatedBy;
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
+
+    // getters and setters
 }

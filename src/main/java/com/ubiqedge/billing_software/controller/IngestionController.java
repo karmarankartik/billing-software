@@ -1,48 +1,44 @@
-/*
+
 package com.ubiqedge.billing_software.controller;
 
-
-
-import com.ubiqedge.billing_software.dto.CreateWaterMeterReadingRequest;
+import com.ubiqedge.billing_software.constant.AppConstant.*;
 import com.ubiqedge.billing_software.dto.ApiResponse;
+import com.ubiqedge.billing_software.dto.WaterMeterReadingRequest;
+import com.ubiqedge.billing_software.entity.User;
+import com.ubiqedge.billing_software.entity.UserSession;
 import com.ubiqedge.billing_software.service.WaterMeterReadingService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
-
 import static com.ubiqedge.billing_software.constant.AppConstant.SUCCESS;
 
 @RestController
-@RequestMapping("/api/water-meters")
-public class WaterMeterReadingController {
+@RequestMapping("/api/water-meter-readings")
+public class IngestionController {
 
     private final WaterMeterReadingService waterMeterReadingService;
 
-    public WaterMeterReadingController(
+    public IngestionController(
             WaterMeterReadingService waterMeterReadingService) {
         this.waterMeterReadingService = waterMeterReadingService;
     }
 
-    @PostMapping("/{waterMeterId}/readings")
-    public ResponseEntity<ApiResponse<Void>> ingestReading(
-            @PathVariable UUID waterMeterId,
-            @RequestBody CreateWaterMeterReadingRequest request) {
+    @PostMapping
+    public ResponseEntity<ApiResponse<Void>> ingest(
+            @Valid @RequestBody WaterMeterReadingRequest request) {
 
-        waterMeterReadingService.ingestReading(
-                waterMeterId,
+        waterMeterReadingService.ingest(
                 request
         );
 
-        return ResponseEntity.status(HttpStatus.OK)
+        return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse<>(
                         true,
                         SUCCESS,
-                        HttpStatus.OK,
+                        HttpStatus.CREATED,
                         null
                 ));
     }
 }
-
-*/

@@ -1,11 +1,7 @@
 package com.ubiqedge.billing_software.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import org.hibernate.generator.EventType;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -22,6 +18,15 @@ public class InvoiceItem {
     @Column(name = "invoice_id", nullable = false)
     private UUID invoiceId;
 
+    @Column(name = "billing_plan_id", nullable = false)
+    private UUID billingPlanId;
+
+    @Column(name = "segment_start", nullable = false)
+    private Instant segmentStart;
+
+    @Column(name = "segment_end", nullable = false)
+    private Instant segmentEnd;
+
     @Column(name = "opening_reading", nullable = false, precision = 19, scale = 6)
     private BigDecimal openingReading;
 
@@ -31,29 +36,11 @@ public class InvoiceItem {
     @Column(name = "consumption", nullable = false, precision = 19, scale = 6)
     private BigDecimal consumption;
 
-    @Column(name = "billing_plan_id", nullable = false)
-    private UUID billingPlanId;
+    @Column(name = "amount", nullable = false, precision = 19, scale = 4)
+    private BigDecimal amount;
 
-    @Column(name = "billing_plan_slab_id")
-    private UUID billingPlanSlabId;
-
-    @Column(name = "slab_lower_bound", precision = 19, scale = 6)
-    private BigDecimal slabLowerBound;
-
-    @Column(name = "slab_upper_bound", precision = 19, scale = 6)
-    private BigDecimal slabUpperBound;
-
-    @Column(name = "price_per_unit", nullable = false, precision = 19, scale = 4)
-    private BigDecimal pricePerUnit;
-
-    @Column(name = "total_amount", nullable = false, precision = 19, scale = 4)
-    private BigDecimal totalAmount;
-
-    @Column(name = "period_from", nullable = false)
-    private Instant periodFrom;
-
-    @Column(name = "period_to", nullable = false)
-    private Instant periodTo;
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
 
     public InvoiceItem() {
     }
@@ -74,12 +61,36 @@ public class InvoiceItem {
         this.invoiceId = invoiceId;
     }
 
+    public Instant getSegmentStart() {
+        return segmentStart;
+    }
+
+    public void setSegmentStart(Instant segmentStart) {
+        this.segmentStart = segmentStart;
+    }
+
+    public UUID getBillingPlanId() {
+        return billingPlanId;
+    }
+
+    public void setBillingPlanId(UUID billingPlanId) {
+        this.billingPlanId = billingPlanId;
+    }
+
     public BigDecimal getOpeningReading() {
         return openingReading;
     }
 
     public void setOpeningReading(BigDecimal openingReading) {
         this.openingReading = openingReading;
+    }
+
+    public Instant getSegmentEnd() {
+        return segmentEnd;
+    }
+
+    public void setSegmentEnd(Instant segmentEnd) {
+        this.segmentEnd = segmentEnd;
     }
 
     public BigDecimal getClosingReading() {
@@ -98,67 +109,20 @@ public class InvoiceItem {
         this.consumption = consumption;
     }
 
-    public UUID getBillingPlanId() {
-        return billingPlanId;
+    public BigDecimal getAmount() {
+        return amount;
     }
 
-    public void setBillingPlanId(UUID billingPlanId) {
-        this.billingPlanId = billingPlanId;
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
     }
 
-    public UUID getBillingPlanSlabId() {
-        return billingPlanSlabId;
+    public Instant getCreatedAt() {
+        return createdAt;
     }
 
-    public void setBillingPlanSlabId(UUID billingPlanSlabId) {
-        this.billingPlanSlabId = billingPlanSlabId;
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
-
-    public BigDecimal getSlabLowerBound() {
-        return slabLowerBound;
-    }
-
-    public void setSlabLowerBound(BigDecimal slabLowerBound) {
-        this.slabLowerBound = slabLowerBound;
-    }
-
-    public BigDecimal getSlabUpperBound() {
-        return slabUpperBound;
-    }
-
-    public void setSlabUpperBound(BigDecimal slabUpperBound) {
-        this.slabUpperBound = slabUpperBound;
-    }
-
-    public BigDecimal getPricePerUnit() {
-        return pricePerUnit;
-    }
-
-    public void setPricePerUnit(BigDecimal pricePerUnit) {
-        this.pricePerUnit = pricePerUnit;
-    }
-
-    public BigDecimal getTotalAmount() {
-        return totalAmount;
-    }
-
-    public void setTotalAmount(BigDecimal totalAmount) {
-        this.totalAmount = totalAmount;
-    }
-
-    public Instant getPeriodFrom() {
-        return periodFrom;
-    }
-
-    public void setPeriodFrom(Instant periodFrom) {
-        this.periodFrom = periodFrom;
-    }
-
-    public Instant getPeriodTo() {
-        return periodTo;
-    }
-
-    public void setPeriodTo(Instant periodTo) {
-        this.periodTo = periodTo;
-    }
+// getters and setters
 }

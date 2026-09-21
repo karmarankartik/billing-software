@@ -1,24 +1,22 @@
-/*
 package com.ubiqedge.billing_software.controller;
 
-
+import com.ubiqedge.billing_software.dto.ApiResponse;
+import com.ubiqedge.billing_software.dto.BillingPlanResponse;
 import com.ubiqedge.billing_software.dto.CreateBillingPlanRequest;
 import com.ubiqedge.billing_software.dto.UpdateBillingPlanRequest;
-import com.ubiqedge.billing_software.dto.BillingPlanResponse;
 import com.ubiqedge.billing_software.entity.User;
 import com.ubiqedge.billing_software.entity.UserSession;
-import com.ubiqedge.billing_software.dto.ApiResponse;
 import com.ubiqedge.billing_software.service.BillingPlanService;
+
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import static com.ubiqedge.billing_software.constant.AppConstant.*;
-
 import java.util.List;
 import java.util.UUID;
 
-import static com.ubiqedge.billing_software.constant.AppConstant.*;
+import static com.ubiqedge.billing_software.constant.AppConstant.SUCCESS;
 
 @RestController
 @RequestMapping("/api/billing-plans")
@@ -32,21 +30,27 @@ public class BillingPlanController {
         this.billingPlanService = billingPlanService;
     }
 
+    /*
+     * ============================================================
+     * CREATE BILLING PLAN
+     * ============================================================
+     */
+
     @PostMapping
-    public ResponseEntity<ApiResponse<BillingPlanResponse>> createBillingPlan(
+    public ResponseEntity<ApiResponse<BillingPlanResponse>> create(
             @RequestAttribute("userSession") UserSession userSession,
             @RequestAttribute("user") User user,
-            @RequestBody CreateBillingPlanRequest request) {
+            @Valid @RequestBody CreateBillingPlanRequest request) {
 
         BillingPlanResponse response =
-                billingPlanService.createBillingPlan(
+                billingPlanService.create(
                         userSession,
                         user,
                         request
                 );
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<>(
+        return ResponseEntity.ok(
+                new ApiResponse<>(
                         true,
                         SUCCESS,
                         HttpStatus.OK,
@@ -54,14 +58,20 @@ public class BillingPlanController {
                 ));
     }
 
+    /*
+     * ============================================================
+     * GET BILLING PLAN BY ID
+     * ============================================================
+     */
+
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<BillingPlanResponse>> getBillingPlan(
+    public ResponseEntity<ApiResponse<BillingPlanResponse>> getById(
             @RequestAttribute("userSession") UserSession userSession,
             @RequestAttribute("user") User user,
-            @PathVariable UUID id) {
+            @PathVariable("id") UUID id) {
 
         BillingPlanResponse response =
-                billingPlanService.getBillingPlan(
+                billingPlanService.getById(
                         userSession,
                         user,
                         id
@@ -73,17 +83,22 @@ public class BillingPlanController {
                         SUCCESS,
                         HttpStatus.OK,
                         response
-                )
-        );
+                ));
     }
 
+    /*
+     * ============================================================
+     * GET ALL BILLING PLANS
+     * ============================================================
+     */
+
     @GetMapping
-    public ResponseEntity<ApiResponse<List<BillingPlanResponse>>> getBillingPlans(
+    public ResponseEntity<ApiResponse<List<BillingPlanResponse>>> getAll(
             @RequestAttribute("userSession") UserSession userSession,
             @RequestAttribute("user") User user) {
 
         List<BillingPlanResponse> response =
-                billingPlanService.getBillingPlans(
+                billingPlanService.getAll(
                         userSession,
                         user
                 );
@@ -94,19 +109,24 @@ public class BillingPlanController {
                         SUCCESS,
                         HttpStatus.OK,
                         response
-                )
-        );
+                ));
     }
 
+    /*
+     * ============================================================
+     * UPDATE BILLING PLAN
+     * ============================================================
+     */
+
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<BillingPlanResponse>> updateBillingPlan(
+    public ResponseEntity<ApiResponse<BillingPlanResponse>> update(
             @RequestAttribute("userSession") UserSession userSession,
             @RequestAttribute("user") User user,
-            @PathVariable UUID id,
-            @RequestBody UpdateBillingPlanRequest request) {
+            @PathVariable("id") UUID id,
+            @Valid @RequestBody UpdateBillingPlanRequest request) {
 
         BillingPlanResponse response =
-                billingPlanService.updateBillingPlan(
+                billingPlanService.update(
                         userSession,
                         user,
                         id,
@@ -119,17 +139,22 @@ public class BillingPlanController {
                         SUCCESS,
                         HttpStatus.OK,
                         response
-                )
-        );
+                ));
     }
 
+    /*
+     * ============================================================
+     * DELETE BILLING PLAN
+     * ============================================================
+     */
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteBillingPlan(
+    public ResponseEntity<ApiResponse<Void>> delete(
             @RequestAttribute("userSession") UserSession userSession,
             @RequestAttribute("user") User user,
-            @PathVariable UUID id) {
+            @PathVariable("id") UUID id) {
 
-        billingPlanService.deleteBillingPlan(
+        billingPlanService.delete(
                 userSession,
                 user,
                 id
@@ -145,5 +170,3 @@ public class BillingPlanController {
         );
     }
 }
-
-*/

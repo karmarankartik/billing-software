@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -32,13 +33,13 @@ public class BillingPlanSlab {
     private BigDecimal pricePerUnit;
 
     @Column(name = "created_at", nullable = false)
-    private OffsetDateTime createdAt;
+    private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
+    private Instant updatedAt;
 
     @Column(name = "deleted_at")
-    private OffsetDateTime deletedAt;
+    private Instant deletedAt;
 
     public BillingPlanSlab() {
     }
@@ -51,20 +52,20 @@ public class BillingPlanSlab {
         this.id = id;
     }
 
-    public UUID getBillingPlanId() {
-        return billingPlanId;
-    }
-
-    public void setBillingPlanId(UUID billingPlanId) {
-        this.billingPlanId = billingPlanId;
-    }
-
     public BigDecimal getLowerBound() {
         return lowerBound;
     }
 
     public void setLowerBound(BigDecimal lowerBound) {
         this.lowerBound = lowerBound;
+    }
+
+    public UUID getBillingPlanId() {
+        return billingPlanId;
+    }
+
+    public void setBillingPlanId(UUID billingPlanId) {
+        this.billingPlanId = billingPlanId;
     }
 
     public BigDecimal getUpperBound() {
@@ -83,27 +84,27 @@ public class BillingPlanSlab {
         this.pricePerUnit = pricePerUnit;
     }
 
-    public OffsetDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(OffsetDateTime createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 
-    public OffsetDateTime getUpdatedAt() {
+    public Instant getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(OffsetDateTime updatedAt) {
+    public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
     }
 
-    public OffsetDateTime getDeletedAt() {
+    public Instant getDeletedAt() {
         return deletedAt;
     }
 
-    public void setDeletedAt(OffsetDateTime deletedAt) {
+    public void setDeletedAt(Instant deletedAt) {
         this.deletedAt = deletedAt;
     }
 }

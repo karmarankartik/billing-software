@@ -1,14 +1,7 @@
-package com.ubiqedge.billing_software.service;
+package com.ubiqedge.billing_software.entity;
 
 
-
-import com.ubiqedge.billing_software.constant.ReadingType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -19,20 +12,23 @@ import java.util.UUID;
 public class WaterMeterReading {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "water_meter_id", nullable = false)
     private UUID waterMeterId;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "reading_type", nullable = false, length = 20)
-    private ReadingType readingType;
+    private String readingType;
 
     @Column(name = "reading_value", nullable = false, precision = 19, scale = 6)
     private BigDecimal readingValue;
 
     @Column(name = "reading_at", nullable = false)
     private Instant readingAt;
+
+    @Column(name = "ingestion_key", nullable = false, length = 255)
+    private String ingestionKey;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -56,11 +52,11 @@ public class WaterMeterReading {
         this.waterMeterId = waterMeterId;
     }
 
-    public ReadingType getReadingType() {
+    public String getReadingType() {
         return readingType;
     }
 
-    public void setReadingType(ReadingType readingType) {
+    public void setReadingType(String readingType) {
         this.readingType = readingType;
     }
 
@@ -80,6 +76,14 @@ public class WaterMeterReading {
         this.readingAt = readingAt;
     }
 
+    public String getIngestionKey() {
+        return ingestionKey;
+    }
+
+    public void setIngestionKey(String ingestionKey) {
+        this.ingestionKey = ingestionKey;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
@@ -88,4 +92,3 @@ public class WaterMeterReading {
         this.createdAt = createdAt;
     }
 }
-

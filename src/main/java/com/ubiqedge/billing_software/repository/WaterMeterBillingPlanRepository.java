@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +13,12 @@ import java.util.UUID;
 
 public interface WaterMeterBillingPlanRepository
         extends JpaRepository<WaterMeterBillingPlan, UUID> {
+
+
+
+    List<WaterMeterBillingPlan> findByWaterMeterIdOrderByEffectiveFromAsc(
+            UUID waterMeterId
+    );
 
     Optional<WaterMeterBillingPlan> findByWaterMeterIdAndEffectiveToIsNull(
             UUID waterMeterId
@@ -46,4 +53,24 @@ public interface WaterMeterBillingPlanRepository
             @Param("periodStart") OffsetDateTime periodStart,
             @Param("periodEnd") OffsetDateTime periodEnd
     );
+
+
+    @Query("""
+        SELECT wmbp
+        FROM WaterMeterBillingPlan wmbp
+        WHERE wmbp.waterMeterId = :waterMeterId
+          AND wmbp.effectiveFrom <= :segmentStart
+          AND (
+                wmbp.effectiveTo IS NULL
+                OR wmbp.effectiveTo >= :segmentEnd
+              )
+        ORDER BY wmbp.effectiveFrom DESC
+        """)
+    List<WaterMeterBillingPlan> findBillingPlansForPeriod(
+            @Param("waterMeterId") UUID waterMeterId,
+            @Param("segmentStart") Instant segmentStart,
+            @Param("segmentEnd") Instant segmentEnd
+    );
+
+
 }

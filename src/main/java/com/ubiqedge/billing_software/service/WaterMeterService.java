@@ -115,6 +115,22 @@ public class WaterMeterService {
     }
 
 
+    public List<WaterMeterResponse> getMetersForUser(
+            UserSession userSession,
+            User loggedInUser) {
+
+        List<WaterMeter> waterMeters =
+                waterMeterRepository.findActiveMetersByUserId(
+                        loggedInUser.getId());
+
+        return waterMeters.stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+
+
+
     public WaterMeterResponse getById(
             UserSession userSession,
             User loggedInUser,
@@ -298,6 +314,7 @@ public class WaterMeterService {
                 waterMeter.getUpdatedBy(),
                 waterMeter.getUpdatedAt()
         );
+
     }
 
 

@@ -15,12 +15,18 @@ public class WebConfig implements WebMvcConfigurer {
         this.authenticationInterceptor = authenticationInterceptor;
     }
 
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
 
         registry.addInterceptor(authenticationInterceptor)
                 .addPathPatterns("/api/**")
-                .excludePathPatterns("/api/auth/**")
+                .excludePathPatterns(
+                        "/api/auth/**",
+                        "/api/water-meter-readings/**"
+                )
                 .order(1);
     }
+
+
 }

@@ -202,9 +202,9 @@ CREATE TABLE IF NOT EXISTS water_meters (
 
     deleted_at TIMESTAMP WITH TIME ZONE,
 
-
                              CONSTRAINT uk_water_meters_meter_number_deleted_at
                              UNIQUE (meter_number, deleted_at),
+
     CONSTRAINT fk_water_meters_created_by
     FOREIGN KEY (created_by)
     REFERENCES users(id),
@@ -235,9 +235,6 @@ CREATE TABLE IF NOT EXISTS water_meter_assignments (
     unassigned_at TIMESTAMP WITH TIME ZONE,
 
     /*
-     * H2 does not provide a convenient PostgreSQL-style
-     * partial unique index.
-     *
      * For an active assignment:
      * active_assignment_key = water_meter_id
      *
@@ -288,14 +285,10 @@ CREATE TABLE IF NOT EXISTS water_meter_assignments (
     );
 
 CREATE INDEX IF NOT EXISTS idx_meter_assignments_meter
-    ON water_meter_assignments(
-    water_meter_id
-    );
+    ON water_meter_assignments(water_meter_id);
 
 CREATE INDEX IF NOT EXISTS idx_meter_assignments_user
-    ON water_meter_assignments(
-    user_id
-    );
+    ON water_meter_assignments(user_id);
 
 CREATE INDEX IF NOT EXISTS idx_meter_assignments_meter_dates
     ON water_meter_assignments(
@@ -369,14 +362,10 @@ CREATE TABLE IF NOT EXISTS water_meter_billing_plans (
     );
 
 CREATE INDEX IF NOT EXISTS idx_meter_billing_plans_meter
-    ON water_meter_billing_plans(
-    water_meter_id
-    );
+    ON water_meter_billing_plans(water_meter_id);
 
 CREATE INDEX IF NOT EXISTS idx_meter_billing_plans_plan
-    ON water_meter_billing_plans(
-    billing_plan_id
-    );
+    ON water_meter_billing_plans(billing_plan_id);
 
 CREATE INDEX IF NOT EXISTS idx_meter_billing_plans_dates
     ON water_meter_billing_plans(
@@ -433,7 +422,7 @@ CREATE TABLE IF NOT EXISTS water_meter_readings (
            ),
 
     /*
-     * Same meter/type/timestamp is also prevented.
+     * Same meter/type/timestamp cannot be inserted twice.
      */
     CONSTRAINT uk_water_meter_readings_meter_type_time
     UNIQUE (
@@ -443,227 +432,130 @@ CREATE TABLE IF NOT EXISTS water_meter_readings (
            )
     );
 
-CREATE INDEX IF NOT EXISTS idx_water_meter_readings_meter
-    ON water_meter_readings(
-    water_meter_id
-    );
-
-CREATE INDEX IF NOT EXISTS idx_water_meter_readings_meter_type_time
-    ON water_meter_readings(
-    water_meter_id,
-    reading_type,
-    reading_at
-    );
-
-CREATE INDEX IF NOT EXISTS idx_water_meter_readings_ingestion
-    ON water_meter_readings(
-    water_meter_id,
-    ingestion_key
-    );
-
-
 -- ============================================================
 -- INVOICES
 -- ============================================================
 
-CREATE TABLE IF NOT EXISTS invoices (
-                                        id UUID DEFAULT RANDOM_UUID() PRIMARY KEY,
-
-    water_meter_id UUID NOT NULL,
+CREATE TABLE IF NOT EXISTS invoices(
+                                       id UUID DEFAULT RANDOM_UUID() PRIMARY KEY,
     user_id UUID NOT NULL,
-
-    billing_month INTEGER NOT NULL,
-    billing_year INTEGER NOT NULL,
-
-    /*
-     * Exact billing period represented by the invoice.
-     */
-    billing_period_start TIMESTAMP WITH TIME ZONE NOT NULL,
-    billing_period_end TIMESTAMP WITH TIME ZONE NOT NULL,
-
-                                     total_consumption DECIMAL(19, 6) NOT NULL,
-    total_amount DECIMAL(19, 4) NOT NULL,
-
+    water_meter_id UUID NOT NULL,
+    assignment_id UUID NOT NULL,
+    billing_period_start DATE NOT NULL,
+    billing_period_end DATE NOT NULL,
+    total_consumption DECIMAL(19,6) NOT NULL,
+    total_amount DECIMAL(19,4) NOT NULL,
     generated_at TIMESTAMP WITH TIME ZONE NOT NULL,
-                                     generated_by UUID NOT NULL,
-
-                                     CONSTRAINT fk_invoices_meter
-                                     FOREIGN KEY (water_meter_id)
-    REFERENCES water_meters(id),
-
-    CONSTRAINT fk_invoices_user
-    FOREIGN KEY (user_id)
-    REFERENCES users(id),
-
-    CONSTRAINT fk_invoices_generated_by
-    FOREIGN KEY (generated_by)
-    REFERENCES users(id),
-
-    CONSTRAINT ck_invoices_month
-    CHECK (
-              billing_month BETWEEN 1 AND 12
-          ),
-
-    CONSTRAINT ck_invoices_year
-    CHECK (
-              billing_year >= 2000
-          ),
-
-    CONSTRAINT ck_invoices_period
-    CHECK (
-              billing_period_end > billing_period_start
-          ),
-
-    CONSTRAINT ck_invoices_consumption
-    CHECK (
-              total_consumption >= 0
-          ),
-
-    CONSTRAINT ck_invoices_amount
-    CHECK (
-              total_amount >= 0
-          ),
-
-    /*
-     * One invoice per customer + meter + billing month.
-     */
-    CONSTRAINT uk_invoices_customer_meter_period
-    UNIQUE (
-               water_meter_id,
-               user_id,
-               billing_month,
-               billing_year
-           )
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+                             CONSTRAINT fk_invoices_user FOREIGN KEY(user_id) REFERENCES users(id),
+    CONSTRAINT fk_invoices_meter FOREIGN KEY(water_meter_id) REFERENCES water_meters(id),
+    CONSTRAINT fk_invoices_assignment FOREIGN KEY(assignment_id) REFERENCES water_meter_assignments(id),
+    CONSTRAINT ck_invoices_period CHECK(billing_period_end>billing_period_start),
+    CONSTRAINT ck_invoices_consumption CHECK(total_consumption>=0),
+    CONSTRAINT ck_invoices_amount CHECK(total_amount>=0)
     );
-
-CREATE INDEX IF NOT EXISTS idx_invoices_user
-    ON invoices(user_id);
-
-CREATE INDEX IF NOT EXISTS idx_invoices_meter
-    ON invoices(water_meter_id);
-
-CREATE INDEX IF NOT EXISTS idx_invoices_period
-    ON invoices(
-    billing_year,
-    billing_month
-    );
-
-CREATE INDEX IF NOT EXISTS idx_invoices_user_period
-    ON invoices(
-    user_id,
-    billing_year,
-    billing_month
-    );
-
 
 -- ============================================================
 -- INVOICE ITEMS
 -- ============================================================
 
-CREATE TABLE IF NOT EXISTS invoice_items (
-                                             id UUID DEFAULT RANDOM_UUID() PRIMARY KEY,
-
+CREATE TABLE IF NOT EXISTS invoice_items(
+                                            id UUID DEFAULT RANDOM_UUID() PRIMARY KEY,
     invoice_id UUID NOT NULL,
-
-    /*
-     * Snapshot of the meter readings used for this
-     * historical billing segment.
-     */
-    opening_reading DECIMAL(19, 6) NOT NULL,
-    closing_reading DECIMAL(19, 6) NOT NULL,
-    consumption DECIMAL(19, 6) NOT NULL,
-
-    /*
-     * Snapshot of the billing plan used at that time.
-     */
     billing_plan_id UUID NOT NULL,
-
-    /*
-     * Nullable for a fixed-plan item.
-     * Populated when the item represents a specific slab.
-     */
-    billing_plan_slab_id UUID,
-
-    /*
-     * Snapshot values.
-     *
-     * These are deliberately stored on the invoice item
-     * so future plan changes cannot alter old invoices.
-     */
-    slab_lower_bound DECIMAL(19, 6),
-    slab_upper_bound DECIMAL(19, 6),
-
-    price_per_unit DECIMAL(19, 4) NOT NULL,
-    total_amount DECIMAL(19, 4) NOT NULL,
-
-    period_from TIMESTAMP WITH TIME ZONE NOT NULL,
-    period_to TIMESTAMP WITH TIME ZONE NOT NULL,
-
-                            CONSTRAINT fk_invoice_items_invoice
-                            FOREIGN KEY (invoice_id)
-    REFERENCES invoices(id),
-
-    CONSTRAINT fk_invoice_items_billing_plan
-    FOREIGN KEY (billing_plan_id)
-    REFERENCES billing_plans(id),
-
-    CONSTRAINT fk_invoice_items_billing_plan_slab
-    FOREIGN KEY (billing_plan_slab_id)
-    REFERENCES billing_plan_slabs(id),
-
+    segment_start DATE NOT NULL,
+    segment_end DATE NOT NULL,
+    opening_reading DECIMAL(19,6) NOT NULL,
+    closing_reading DECIMAL(19,6) NOT NULL,
+    consumption DECIMAL(19,6) NOT NULL,
+    amount DECIMAL(19,4) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+                             CONSTRAINT fk_invoice_items_invoice
+                             FOREIGN KEY(invoice_id) REFERENCES invoices(id),
+    CONSTRAINT fk_invoice_items_plan
+    FOREIGN KEY(billing_plan_id) REFERENCES billing_plans(id),
     CONSTRAINT ck_invoice_items_dates
-    CHECK (
-              period_to > period_from
-          ),
-
+    CHECK(segment_end>segment_start),
     CONSTRAINT ck_invoice_items_readings
-    CHECK (
-              closing_reading >= opening_reading
-          ),
-
+    CHECK(closing_reading>=opening_reading),
     CONSTRAINT ck_invoice_items_consumption
-    CHECK (
-              consumption >= 0
-          ),
-
-    CONSTRAINT ck_invoice_items_price
-    CHECK (
-              price_per_unit >= 0
-          ),
-
+    CHECK(consumption>=0),
     CONSTRAINT ck_invoice_items_amount
-    CHECK (
-              total_amount >= 0
-          ),
-
-    CONSTRAINT ck_invoice_items_slab_bounds
-    CHECK (
-(
-              billing_plan_slab_id IS NULL
-              AND slab_lower_bound IS NULL
-              AND slab_upper_bound IS NULL
-)
-    OR
-(
-    billing_plan_slab_id IS NOT NULL
-    AND slab_lower_bound IS NOT NULL
-    AND slab_lower_bound >= 0
-    AND (
-    slab_upper_bound IS NULL
-    OR slab_upper_bound > slab_lower_bound
-        )
-    )
-    )
+    CHECK(amount>=0)
     );
 
-CREATE INDEX IF NOT EXISTS idx_invoice_items_invoice
-    ON invoice_items(invoice_id);
 
-CREATE INDEX IF NOT EXISTS idx_invoice_items_billing_plan
-    ON invoice_items(billing_plan_id);
 
-CREATE INDEX IF NOT EXISTS idx_invoice_items_billing_plan_slab
-    ON invoice_items(billing_plan_slab_id);
+-- ============================================================
+-- BILLING GENERATION JOBS
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS billing_generation_jobs (
+                                                       id UUID DEFAULT RANDOM_UUID() PRIMARY KEY,
+
+    billing_period_start DATE NOT NULL,
+    billing_period_end DATE NOT NULL,
+
+    status VARCHAR(20) NOT NULL,
+
+    meters_processed INT NOT NULL DEFAULT 0,
+    invoices_generated INT NOT NULL DEFAULT 0,
+    meters_skipped INT NOT NULL DEFAULT 0,
+
+    started_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    completed_at TIMESTAMP WITH TIME ZONE,
+
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+
+                             CONSTRAINT ck_billing_generation_jobs_status
+                             CHECK (status IN ('RUNNING', 'COMPLETED', 'FAILED')),
+
+    CONSTRAINT ck_billing_generation_jobs_period
+    CHECK (billing_period_end > billing_period_start)
+    );
+
+CREATE INDEX IF NOT EXISTS idx_billing_generation_jobs_status
+    ON billing_generation_jobs(status);
+
+
+
+
+
+-- ============================================================
+-- BILLING GENERATION JOB SKIPPED METERS
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS billing_generation_job_skips (
+                                                            id UUID DEFAULT RANDOM_UUID() PRIMARY KEY,
+
+    job_id UUID NOT NULL,
+    water_meter_id UUID NOT NULL,
+
+    reason VARCHAR(500) NOT NULL,
+
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+
+                             CONSTRAINT fk_job_skips_job
+                             FOREIGN KEY (job_id)
+    REFERENCES billing_generation_jobs(id),
+
+    CONSTRAINT fk_job_skips_meter
+    FOREIGN KEY (water_meter_id)
+    REFERENCES water_meters(id)
+    );
+
+CREATE INDEX IF NOT EXISTS idx_job_skips_job
+    ON billing_generation_job_skips(job_id);
+
+
+CREATE UNIQUE INDEX IF NOT EXISTS
+    uk_invoices_assignment_period
+    ON invoices (
+    assignment_id,
+    billing_period_start,
+    billing_period_end
+    );
+
 
 
 -- ============================================================

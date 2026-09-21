@@ -1,20 +1,21 @@
-/*
 package com.ubiqedge.billing_software.controller;
 
-import com.ubiqedge.billing_software.dto.InvoiceResponse;
+import com.ubiqedge.billing_software.dto.*;
+import com.ubiqedge.billing_software.entity.Invoice;
+import com.ubiqedge.billing_software.entity.InvoiceItem;
 import com.ubiqedge.billing_software.entity.User;
 import com.ubiqedge.billing_software.entity.UserSession;
-import com.ubiqedge.billing_software.dto.ApiResponse;
 import com.ubiqedge.billing_software.service.InvoiceService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-import static com.ubiqedge.billing_software.constant.AppConstant.*;
+import static com.ubiqedge.billing_software.constant.AppConstant.INVOICES_GENERATED_SUCCESSFULLY;
 
 @RestController
 @RequestMapping("/api")
@@ -26,104 +27,179 @@ public class InvoiceController {
         this.invoiceService = invoiceService;
     }
 
+    // ============================================================
+    // ADMIN - BULK GENERATE
+    // ============================================================
+
+    @PostMapping("/admin/invoices/generate")
+    public ResponseEntity<ApiResponse<InvoiceGenerationResponse>>
+    generateInvoices(
+            @RequestAttribute("userSession")
+            UserSession userSession,
+
+            @RequestAttribute("user")
+            User loggedInUser,
+
+            @Valid
+            @RequestBody
+            GenerateInvoiceRequest request) {
+
+        InvoiceGenerationResponse response =
+                invoiceService.startInvoiceGeneration(
+                        userSession,
+                        loggedInUser,
+                        request.billingPeriodStart(),
+                        request.billingPeriodEnd()
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.ACCEPTED)
+                .body(
+                        new ApiResponse<>(
+                                true,
+                                INVOICES_GENERATED_SUCCESSFULLY,
+                                HttpStatus.ACCEPTED,
+                                response
+                        )
+                );
+    }
+
+    // ============================================================
+    // ADMIN - CHECK GENERATION JOB
+    // ============================================================
+
+    @GetMapping("/admin/invoices/generation-jobs/{jobId}")
+    public ResponseEntity<ApiResponse<BillingGenerationJobResponse>>
+    getGenerationJob(
+            @RequestAttribute("userSession")
+            UserSession userSession,
+
+            @RequestAttribute("user")
+            User loggedInUser,
+
+            @PathVariable
+            UUID jobId) {
+
+        BillingGenerationJobResponse response =
+                invoiceService.getGenerationJob(
+                        userSession,
+                        loggedInUser,
+                        jobId
+                );
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Billing generation job fetched successfully",
+                        HttpStatus.OK,
+                        response
+                )
+        );
+    }
+
+// ============================================================
+// USER - VIEW / GET INVOICES
+// ============================================================
+
+    @GetMapping("/invoices")
+    public ResponseEntity<ApiResponse<List<Invoice>>>
+    getMyInvoices(
+            @RequestAttribute("userSession")
+            UserSession userSession,
+
+            @RequestAttribute("user")
+            User loggedInUser,
+
+            @RequestParam
+            LocalDate from,
+
+            @RequestParam
+            LocalDate to) {
+
+        List<Invoice> invoices =
+                invoiceService.getInvoicesForUser(
+                        userSession,
+                        loggedInUser,
+                        from,
+                        to
+                );
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Invoices fetched successfully",
+                        HttpStatus.OK,
+                        invoices
+                )
+        );
+    }
+
+
+// ============================================================
+// USER - CUSTOM GENERATION
+// ============================================================
+
     @PostMapping("/invoices/generate")
-    public ResponseEntity<ApiResponse<Void>> generateInvoices(
-            @RequestAttribute("userSession") UserSession userSession,
-            @RequestAttribute("user") User user,
-            @RequestParam int month,
-            @RequestParam int year) {
+    public ResponseEntity<ApiResponse<UserInvoiceGenerationResponse>>
+    generateMyInvoices(
+            @RequestAttribute("userSession")
+            UserSession userSession,
 
-        invoiceService.generateInvoices(
-                userSession,
-                user,
-                month,
-                year
-        );
+            @RequestAttribute("user")
+            User loggedInUser,
 
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        true,
-                        SUCCESS,
-                        HttpStatus.OK,
-                        null
-                )
-        );
-    }
+            @Valid
+            @RequestBody
+            GenerateInvoiceRequest request) {
 
-    @GetMapping("/customer/meters/{waterMeterId}/bill")
-    public ResponseEntity<ApiResponse<InvoiceResponse>> getCustomerMeterInvoice(
-            @RequestAttribute("userSession") UserSession userSession,
-            @RequestAttribute("user") User user,
-            @PathVariable UUID waterMeterId,
-            @RequestParam int month,
-            @RequestParam int year) {
-
-        InvoiceResponse response =
-                invoiceService.getCustomerMeterInvoice(
+        UserInvoiceGenerationResponse response =
+                invoiceService.generateInvoicesForUser(
                         userSession,
-                        user,
-                        waterMeterId,
-                        month,
-                        year
+                        loggedInUser,
+                        request.billingPeriodStart(),
+                        request.billingPeriodEnd()
                 );
 
         return ResponseEntity.ok(
                 new ApiResponse<>(
                         true,
-                        SUCCESS,
+                        "Invoices generated successfully",
                         HttpStatus.OK,
                         response
                 )
         );
     }
 
-    @GetMapping("/customer/bill")
-    public ResponseEntity<ApiResponse<List<InvoiceResponse>>> getCustomerInvoices(
-            @RequestAttribute("userSession") UserSession userSession,
-            @RequestAttribute("user") User user,
-            @RequestParam int month,
-            @RequestParam int year) {
+    // ============================================================
+    // USER - INVOICE ITEMS
+    // ============================================================
 
-        List<InvoiceResponse> response =
-                invoiceService.getCustomerInvoices(
+    @GetMapping("/invoices/{invoiceId}/items")
+    public ResponseEntity<ApiResponse<List<InvoiceItem>>>
+    getInvoiceItems(
+            @RequestAttribute("userSession")
+            UserSession userSession,
+
+            @RequestAttribute("user")
+            User loggedInUser,
+
+            @PathVariable
+            UUID invoiceId) {
+
+        List<InvoiceItem> items =
+                invoiceService.getInvoiceItems(
                         userSession,
-                        user,
-                        month,
-                        year
+                        loggedInUser,
+                        invoiceId
                 );
 
         return ResponseEntity.ok(
                 new ApiResponse<>(
                         true,
-                        SUCCESS,
+                        "Invoice details fetched successfully",
                         HttpStatus.OK,
-                        response
+                        items
                 )
         );
     }
-
-    @GetMapping("/customer/bill/total")
-    public ResponseEntity<ApiResponse<BigDecimal>> getCustomerTotalAmount(
-            @RequestAttribute("userSession") UserSession userSession,
-            @RequestAttribute("user") User user,
-            @RequestParam int month,
-            @RequestParam int year) {
-
-        BigDecimal response =
-                invoiceService.getCustomerTotalAmount(
-                        userSession,
-                        user,
-                        month,
-                        year
-                );
-
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        true,
-                        SUCCESS,
-                        HttpStatus.OK,
-                        response
-                )
-        );
-    }
-}*/
+}

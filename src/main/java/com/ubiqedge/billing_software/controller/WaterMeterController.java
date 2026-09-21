@@ -118,6 +118,11 @@ public class WaterMeterController {
         );
     }
 
+    @GetMapping("/my") public ResponseEntity<ApiResponse<List<WaterMeterResponse>>> getMyMeters( @RequestAttribute("userSession") UserSession userSession, @RequestAttribute("user") User loggedInUser) {
+        List<WaterMeterResponse> response = waterMeterService.getMetersForUser( userSession, loggedInUser);
+        return ResponseEntity.ok( new ApiResponse<>( true, SUCCESS, HttpStatus.OK, response ) );
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteWaterMeter(
             @RequestAttribute("userSession") UserSession userSession,
