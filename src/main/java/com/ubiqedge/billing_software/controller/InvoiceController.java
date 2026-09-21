@@ -7,7 +7,9 @@ import com.ubiqedge.billing_software.entity.User;
 import com.ubiqedge.billing_software.entity.UserSession;
 import com.ubiqedge.billing_software.exception.ApiException;
 import com.ubiqedge.billing_software.service.InvoiceService;
+import com.ubiqedge.billing_software.validation.InvoiceGenerationRequestValidator;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +25,9 @@ import static com.ubiqedge.billing_software.constant.AppConstant.INVOICES_GENERA
 @RestController
 @RequestMapping("/api")
 public class InvoiceController {
+
+    @Autowired
+    InvoiceGenerationRequestValidator validator;
 
     private final InvoiceService invoiceService;
 
@@ -45,7 +50,11 @@ public class InvoiceController {
 
             @Valid
             @RequestBody
-            GenerateInvoiceRequest request) {
+            MonthlyInvoiceGenerationRequest request) {
+
+        GenerateInvoiceRequest generateInvoiceRequest =
+                validator
+                        .validateAndBuild(request);
 
 
 
@@ -53,8 +62,8 @@ public class InvoiceController {
                 invoiceService.startInvoiceGeneration(
                         userSession,
                         loggedInUser,
-                        request.billingPeriodStart(),
-                        request.billingPeriodEnd()
+                        generateInvoiceRequest.billingPeriodStart(),
+                        generateInvoiceRequest.billingPeriodEnd()
                 );
 
         return ResponseEntity

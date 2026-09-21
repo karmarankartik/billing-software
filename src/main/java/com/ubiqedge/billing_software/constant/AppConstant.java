@@ -108,6 +108,9 @@ public class AppConstant {
     public  static final String INVALID_USERNAME_PASSWORD = "invalid username or password";
     public static final String GENRIC_ERROR_MESSAGE = "something went wrong, please try again";
 
+    public static final String INVALID_BILLING_YEAR = "invalid year";
+    public static final String INVALID_BILLING_MONTH = "invalid month";
+
 
     public static final String BILLING_DATE_RANGE_OUT_OF_BOUNDS =
             "Billing date range is out of bounds for the meter";

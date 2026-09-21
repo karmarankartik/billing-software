@@ -644,3 +644,112 @@ WHERE tc.TABLE_NAME = 'WATER_METER_ASSIGNMENTS' [90059-240]
 	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:483)
 	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:74)
 	at java.base/java.lang.Thread.run(Thread.java:833)
+2026-09-21 22:41:02.341749+05:30 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Function "CONVERT_TZ" not found; SQL statement:
+SELECT
+    id,
+    water_meter_id,
+    reading_type,
+    reading_value,
+    reading_at,
+    CONVERT_TZ(reading_at, 'UTC', 'Asia/Kolkata') AS reading_at_ist
+FROM water_meter_readings
+WHERE water_meter_id = 'ffa32711-56e9-405a-987f-233b122153c5'
+  AND reading_type = 'TOTAL'
+  AND reading_at >= TIMESTAMP WITH TIME ZONE '2026-09-21 00:00:00+05:30'
+  AND reading_at <  TIMESTAMP WITH TIME ZONE '2026-10-02 00:00:00+05:30'
+ORDER BY reading_at [90022-240]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:644)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
+	at org.h2.message.DbException.get(DbException.java:223)
+	at org.h2.message.DbException.get(DbException.java:199)
+	at org.h2.command.Parser.readFunction(Parser.java:3775)
+	at org.h2.command.Parser.readTermWithIdentifier(Parser.java:5158)
+	at org.h2.command.Parser.readTerm(Parser.java:4844)
+	at org.h2.command.Parser.readFactor(Parser.java:3326)
+	at org.h2.command.Parser.readSum(Parser.java:3313)
+	at org.h2.command.Parser.readConcat(Parser.java:3278)
+	at org.h2.command.Parser.readCondition(Parser.java:3068)
+	at org.h2.command.Parser.readExpression(Parser.java:2988)
+	at org.h2.command.Parser.parseSelectExpressions(Parser.java:2788)
+	at org.h2.command.Parser.parseSelect(Parser.java:2806)
+	at org.h2.command.Parser.parseQueryPrimary(Parser.java:2695)
+	at org.h2.command.Parser.parseQueryTerm(Parser.java:2550)
+	at org.h2.command.Parser.parseQueryExpressionBody(Parser.java:2529)
+	at org.h2.command.Parser.parseQueryExpressionBodyAndEndOfQuery(Parser.java:2522)
+	at org.h2.command.Parser.parseQueryExpression(Parser.java:2515)
+	at org.h2.command.Parser.parseQuery(Parser.java:2482)
+	at org.h2.command.Parser.parsePrepared(Parser.java:613)
+	at org.h2.command.Parser.parse(Parser.java:584)
+	at org.h2.command.Parser.parse(Parser.java:559)
+	at org.h2.command.Parser.prepareCommand(Parser.java:487)
+	at org.h2.engine.SessionLocal.prepareLocal(SessionLocal.java:647)
+	at org.h2.engine.SessionLocal.prepareCommand(SessionLocal.java:563)
+	at org.h2.jdbc.JdbcConnection.prepareCommand(JdbcConnection.java:1160)
+	at org.h2.jdbc.JdbcStatement.executeInternal(JdbcStatement.java:245)
+	at org.h2.jdbc.JdbcStatement.execute(JdbcStatement.java:231)
+	at org.h2.server.web.WebApp.getResult(WebApp.java:1344)
+	at org.h2.server.web.WebApp.query(WebApp.java:1142)
+	at org.h2.server.web.WebApp.query(WebApp.java:1118)
+	at org.h2.server.web.WebApp.process(WebApp.java:244)
+	at org.h2.server.web.WebApp.processRequest(WebApp.java:176)
+	at org.h2.server.web.JakartaWebServlet.doGet(JakartaWebServlet.java:129)
+	at org.h2.server.web.JakartaWebServlet.doPost(JakartaWebServlet.java:166)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:649)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:710)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:132)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:59)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:111)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:111)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:111)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:199)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:111)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:165)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:77)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:535)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:86)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:71)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:347)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:406)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:71)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:1307)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:2036)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:74)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:949)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:483)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:74)
+	at java.base/java.lang.Thread.run(Thread.java:833)
+2026-09-21 22:42:51.801780+05:30 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "SELECT\000d\000a10    id,\000d\000a10    water_meter_id,\000d\000a10    reading_type,\000d\000a10    reading_value,\000d\000a10    reading_at\000d\000a[*]10FROM water_meter_readings\000d\000a10WHERE water_meter_id = 'ffa32711-56e9-405a-987f-233b122153c5'\000d\000a10  AND reading_type = 'TOTAL'\000d\000a10  AND reading_at >= TIMESTAMP WITH TIME ZONE '2026-09-21 00:00:00+05:30'\000d\000a10  AND reading_at < TIMESTAMP WITH TIME ZONE '2026-10-02 00:00:00+05:30'\000d\000a10ORDER BY reading_at"; SQL statement:
+SELECT
+10    id,
+10    water_meter_id,
+10    reading_type,
+10    reading_value,
+10    reading_at
+10FROM water_meter_readings
+10WHERE water_meter_id = 'ffa32711-56e9-405a-987f-233b122153c5'
+10  AND reading_type = 'TOTAL'
+10  AND reading_at >= TIMESTAMP WITH TIME ZONE '2026-09-21 00:00:00+05:30'
+10  AND reading_at < TIMESTAMP WITH TIME ZONE '2026-10-02 00:00:00+05:30'
+10ORDER BY reading_at [42000-240]
+2026-09-21 22:42:59.165769+05:30 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "SELECT\000d\000a10    id,\000d\000a10    water_meter_id,\000d\000a10    reading_type,\000d\000a10    reading_value,\000d\000a10    reading_at\000d\000a[*]10FROM water_meter_readings\000d\000a10WHERE water_meter_id = 'ffa32711-56e9-405a-987f-233b122153c5'\000d\000a10  AND reading_type = 'TOTAL'\000d\000a10  AND reading_at >= TIMESTAMP WITH TIME ZONE '2026-09-21 00:00:00+05:30'\000d\000a10  AND reading_at < TIMESTAMP WITH TIME ZONE '2026-10-02 00:00:00+05:30'\000d\000a10ORDER BY reading_at"; SQL statement:
+SELECT
+10    id,
+10    water_meter_id,
+10    reading_type,
+10    reading_value,
+10    reading_at
+10FROM water_meter_readings
+10WHERE water_meter_id = 'ffa32711-56e9-405a-987f-233b122153c5'
+10  AND reading_type = 'TOTAL'
+10  AND reading_at >= TIMESTAMP WITH TIME ZONE '2026-09-21 00:00:00+05:30'
+10  AND reading_at < TIMESTAMP WITH TIME ZONE '2026-10-02 00:00:00+05:30'
+10ORDER BY reading_at [42000-240]
