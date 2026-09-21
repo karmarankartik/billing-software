@@ -1,0 +1,1203 @@
+============================================================
+WATER BILLING SYSTEM
+DEPLOYMENT STRATEGY & RECOMMENDED INFRASTRUCTURE PLAN
+=====================================================
+
+1. OBJECTIVE
+
+---
+
+The deployment strategy is designed to support the complete lifecycle
+of the Water Billing System:
+
+```
+Development
+    |
+    v
+Integration
+    |
+    v
+QA / Testing
+    |
+    v
+Staging / UAT
+    |
+    v
+Production
+```
+
+The production infrastructure is sized according to the number of
+water meters being managed.
+
+Initial target scale:
+
+```
+50 Meters
+100 Meters
+300 Meters
+```
+
+The architecture should remain horizontally scalable so that increasing
+the number of meters does not require a fundamental redesign.
+
+============================================================
+2. APPLICATION ARCHITECTURE
+===========================
+
+Recommended initial architecture:
+
+```
+            +----------------------+
+            |   Client / Admin UI  |
+            +----------+-----------+
+                       |
+                       v
+            +----------------------+
+            |   Reverse Proxy /    |
+            |   Load Balancer      |
+            +----------+-----------+
+                       |
+                       v
+            +----------------------+
+            | Spring Boot Backend  |
+            | REST API             |
+            +----------+-----------+
+                       |
+         +-------------+-------------+
+         |                           |
+         v                           v
+  +-------------+             +-------------+
+  | Relational  |             | Background  |
+  | Database    |             | Jobs        |
+  +-------------+             +-------------+
+         |
+         v
+  Billing / Invoice
+  / Meter Data
+```
+
+The initial deployment should remain a modular monolithic Spring Boot
+application rather than introducing microservices prematurely.
+
+This keeps infrastructure, deployment and operational complexity low
+while still allowing individual modules to be separated into services
+later if scale or business requirements justify it.
+
+============================================================
+3. DEPLOYMENT ENVIRONMENTS
+==========================
+
+The recommended environment progression is:
+
+```
+Developer Local
+      |
+      v
+Shared Development
+      |
+      v
+QA / Test
+      |
+      v
+Staging / UAT
+      |
+      v
+Production
+```
+
+---
+
+## 3.1 LOCAL DEVELOPMENT
+
+Purpose:
+
+* Individual development
+* Unit testing
+* API development
+* Debugging
+
+Each developer runs the Spring Boot application locally.
+
+Example:
+
+```
+Developer 1 -> localhost:8080
+Developer 2 -> localhost:8081
+Developer 3 -> localhost:8082
+```
+
+Each developer should use an isolated database/data directory.
+
+Recommended:
+
+```
+Spring Boot
+    |
+    v
+Local H2 Database
+```
+
+---
+
+## 3.2 SHARED DEVELOPMENT
+
+Purpose:
+
+* Integration of all developers' work
+* API integration
+* Cross-module testing
+* Early detection of integration problems
+
+Code flow:
+
+```
+Developer Feature Branches
+          |
+          v
+      Pull Request
+          |
+          v
+        develop
+          |
+          v
+   Shared Development
+      Environment
+```
+
+---
+
+## 3.3 QA / TEST
+
+Purpose:
+
+* Functional testing
+* Regression testing
+* API testing
+* Billing calculation validation
+* Assignment history validation
+* Negative/error scenario testing
+
+Only an integrated and review-approved build should be promoted
+from development to QA.
+
+QA should use a dedicated database and test data set.
+
+---
+
+## 3.4 STAGING / UAT
+
+Purpose:
+
+* Production-like validation
+* Business acceptance testing
+* Final deployment verification
+* Release candidate validation
+
+Staging should replicate the production architecture as closely
+as practical.
+
+Typical flow:
+
+```
+QA Approved Build
+       |
+       v
+   Staging
+       |
+       v
+   UAT Sign-off
+       |
+       v
+  Production
+```
+
+---
+
+## 3.5 PRODUCTION
+
+Only approved release artifacts should be deployed to production.
+
+Production should have:
+
+* Persistent database
+* HTTPS
+* Reverse proxy / load balancer
+* Application monitoring
+* Centralized logging
+* Database backup
+* Health checks
+* Rollback capability
+* Environment-specific configuration
+* Secrets management
+
+============================================================
+4. BRANCHING AND CODE PROMOTION STRATEGY
+========================================
+
+Recommended branch flow:
+
+```
+feature/*
+    |
+    v
+  develop
+    |
+    v
+release/*
+    |
+    v
+  main
+    |
+    v
+Production
+```
+
+Development rules:
+
+1. Each developer works on a feature branch.
+2. Changes are committed regularly.
+3. Pull Request is created after completion.
+4. Code review is performed.
+5. Automated build/tests are executed.
+6. Approved changes are merged into develop.
+7. Integrated build is deployed to the shared environment.
+8. QA-approved changes are promoted toward release.
+9. Production deployment is performed only from an approved release.
+
+============================================================
+5. CI/CD PIPELINE
+=================
+
+Recommended pipeline:
+
+Developer
+|
+v
+Git Repository
+|
+v
+Pull Request
+|
++--> Compile
+|
++--> Unit Tests
+|
++--> Integration Tests
+|
++--> Static Analysis
+|
++--> Package JAR
+|
+v
+Artifact
+|
+v
+Development
+|
+v
+QA
+|
+v
+Staging
+|
+v
+Production
+
+A deployment should fail automatically if critical build or test
+checks fail.
+
+============================================================
+6. PRODUCTION DEPLOYMENT MODEL
+==============================
+
+For the expected scale of 50-300 meters, a containerized deployment
+is recommended.
+
+Recommended logical stack:
+
+```
+            INTERNET / CLIENT
+                   |
+                   v
+            HTTPS / TLS
+                   |
+                   v
+          Reverse Proxy / LB
+                   |
+                   v
+          Spring Boot API
+                   |
+         +---------+---------+
+         |                   |
+         v                   v
+   Relational DB       Scheduled Jobs
+         |
+         v
+   Billing / Invoice
+   / Meter History
+```
+
+Recommended technology choices:
+
+Application:
+Java 17
+Spring Boot
+Embedded Tomcat
+
+Packaging:
+Docker container
+
+Reverse Proxy:
+Nginx or cloud load balancer
+
+Database:
+PostgreSQL recommended for production
+
+Local development:
+H2 acceptable
+
+Source Control:
+GitHub
+
+CI/CD:
+GitHub Actions or equivalent CI/CD platform
+
+============================================================
+7. IMPORTANT DATABASE RECOMMENDATION
+====================================
+
+H2 is suitable for:
+
+* Local development
+* Automated tests
+* Assignment demonstration
+* Small development environments
+
+For production, PostgreSQL or another managed relational database
+is recommended.
+
+Reason:
+
+* Better operational reliability
+* Production-grade concurrency
+* Backup and recovery support
+* Monitoring
+* Transaction management
+* Better long-term scalability
+* Managed database options
+* Easier disaster recovery
+
+The application should therefore keep the database configuration
+environment-specific.
+
+Example:
+
+LOCAL:
+H2
+
+QA:
+PostgreSQL / isolated test database
+
+STAGING:
+PostgreSQL
+
+PRODUCTION:
+Managed PostgreSQL
+
+============================================================
+8. INFRASTRUCTURE SIZING
+========================
+
+The following sizing is recommended for the expected meter volumes.
+
+These are practical starting configurations rather than hard
+capacity limits.
+
+The actual infrastructure should be adjusted after observing:
+
+* API requests per second
+* Meter reading frequency
+* Database size
+* Concurrent users
+* Billing batch duration
+* CPU utilization
+* Memory utilization
+* Database I/O
+
+============================================================
+9. DEPLOYMENT FOR 50 METERS
+===========================
+
+Expected scale:
+
+```
+50 water meters
+```
+
+Recommended architecture:
+
+```
+Client
+  |
+  v
+Reverse Proxy
+  |
+  v
+Spring Boot Application
+  |
+  v
+PostgreSQL
+```
+
+Application Server:
+
+```
+CPU:       1-2 vCPU
+RAM:       2-4 GB
+Storage:   30-50 GB SSD
+```
+
+Database:
+
+```
+CPU:       1-2 vCPU
+RAM:       2-4 GB
+Storage:   20-50 GB SSD
+```
+
+Recommended deployment:
+
+```
+1 Application Instance
+1 Database Instance
+```
+
+Characteristics:
+
+* Simple architecture
+* Low operational cost
+* Suitable for small installations
+* No load balancer required if there is only one application instance
+* Automated database backup should still be enabled
+
+============================================================
+10. DEPLOYMENT FOR 100 METERS
+=============================
+
+Expected scale:
+
+```
+100 water meters
+```
+
+Recommended architecture:
+
+```
+          Reverse Proxy
+                |
+                v
+         Spring Boot API
+                |
+                v
+           PostgreSQL
+```
+
+Application:
+
+```
+CPU:       2 vCPU
+RAM:       4 GB
+Storage:   40-60 GB SSD
+```
+
+Database:
+
+```
+CPU:       2 vCPU
+RAM:       4 GB
+Storage:   30-60 GB SSD
+```
+
+Recommended deployment:
+
+```
+1 Application Instance
+1 Database Instance
+```
+
+Optional:
+
+```
+2 Application Instances
+       |
+       v
+   Load Balancer
+```
+
+The second application instance becomes useful if higher
+availability is required.
+
+At this scale, the database is still unlikely to be the primary
+architectural bottleneck under normal meter-reading workloads.
+
+============================================================
+11. DEPLOYMENT FOR 300 METERS
+=============================
+
+Expected scale:
+
+```
+300 water meters
+```
+
+Recommended architecture:
+
+```
+             HTTPS
+               |
+               v
+         Load Balancer
+            /       \
+           /         \
+          v           v
+    Spring Boot   Spring Boot
+    Instance 1    Instance 2
+          \         /
+           \       /
+            v     v
+         PostgreSQL
+              |
+              v
+        Backup Storage
+```
+
+Application Instances:
+
+```
+Instance 1:
+    2-4 vCPU
+    4-8 GB RAM
+
+Instance 2:
+    2-4 vCPU
+    4-8 GB RAM
+```
+
+Database:
+
+```
+2-4 vCPU
+8 GB RAM
+50-100+ GB SSD
+```
+
+Recommended deployment:
+
+```
+2 Application Instances
+1 Managed PostgreSQL Instance
+1 Load Balancer / Reverse Proxy
+```
+
+Benefits:
+
+* High availability at application layer
+* Rolling deployments
+* Better fault tolerance
+* Ability to handle increased concurrent requests
+* Easier future horizontal scaling
+
+============================================================
+12. INFRASTRUCTURE COMPARISON
+=============================
+
++---------+------------------+-------------+-------------+
+| Meters  | App Instances    | App Size    | DB Size     |
++---------+------------------+-------------+-------------+
+|   50    | 1                | 1-2 vCPU    | 1-2 vCPU    |
+|         |                  | 2-4 GB RAM  | 2-4 GB RAM  |
++---------+------------------+-------------+-------------+
+|  100    | 1                | 2 vCPU      | 2 vCPU      |
+|         |                  | 4 GB RAM    | 4 GB RAM    |
++---------+------------------+-------------+-------------+
+|  300    | 2                | 2-4 vCPU    | 2-4 vCPU    |
+|         |                  | 4-8 GB RAM  | 8 GB RAM    |
++---------+------------------+-------------+-------------+
+
+These values represent recommended starting points.
+
+They should not be treated as maximum supported capacity.
+
+============================================================
+13. BILLING BATCH DEPLOYMENT
+============================
+
+Billing generation is different from normal API traffic because
+large billing runs can create CPU, database and I/O load.
+
+Recommended approach:
+
+```
+API Application
+      |
+      v
+Billing Generation Job
+      |
+      v
+Process meters in batches
+      |
+      v
+Generate Invoice
+      |
+      v
+Generate Invoice Items
+      |
+      v
+Record Success / Skip / Failure
+```
+
+For 300 meters:
+
+```
+DO NOT process all meters as one large transaction.
+```
+
+Instead:
+
+```
+300 meters
+   |
+   +--> Batch 1
+   +--> Batch 2
+   +--> Batch 3
+   +--> ...
+   +--> Batch N
+```
+
+The existing billing-generation-job and job-skip concepts support
+this approach.
+
+Benefits:
+
+* Lower memory usage
+* Smaller transactions
+* Easier retry
+* Failure isolation
+* Better observability
+* Easier operational recovery
+
+============================================================
+14. METER READING INGESTION
+===========================
+
+Meter readings should be treated separately from user-facing
+billing requests.
+
+Logical flow:
+
+```
+Water Meter
+     |
+     v
+Reading Ingestion
+     |
+     v
+Validation
+     |
+     v
+water_meter_readings
+     |
+     v
+Billing Calculation
+     |
+     v
+Invoice
+```
+
+The reading ingestion layer should support:
+
+* Validation
+* Duplicate protection
+* Timestamp validation
+* Meter identification
+* Idempotent ingestion
+* Invalid reading rejection
+* Auditability
+
+The current ingestion-key / uniqueness strategy should be retained
+to prevent duplicate readings from creating incorrect consumption.
+
+============================================================
+15. SECURITY ARCHITECTURE
+=========================
+
+Production deployment should include:
+
+```
+HTTPS / TLS
+      |
+      v
+Reverse Proxy
+      |
+      v
+Spring Boot
+      |
+      v
+Database
+```
+
+Security controls:
+
+* HTTPS only
+* Strong authentication
+* Authorization by role
+* Secure password hashing
+* Session/token expiration
+* Database credentials outside source code
+* Secrets stored using environment variables or secrets manager
+* Database not directly exposed to the internet
+* Firewall/security groups
+* Input validation
+* SQL injection protection through parameterized queries/JPA
+* Audit logging for important operations
+
+============================================================
+16. NETWORK ARCHITECTURE
+========================
+
+Recommended production network:
+
+```
+             INTERNET
+                |
+                v
+         Public Load Balancer
+                |
+                v
+         Application Subnet
+                |
+                v
+         Private DB Subnet
+                |
+                v
+         PostgreSQL
+```
+
+The database should NOT be publicly accessible.
+
+Only the application layer should be exposed to the public
+network where required.
+
+============================================================
+17. BACKUP & DISASTER RECOVERY
+==============================
+
+Production database should have:
+
+* Automated daily backups
+* Point-in-time recovery where supported
+* Backup retention policy
+* Periodic restore testing
+* Off-instance backup storage
+
+Recommended principle:
+
+```
+Backup is not considered reliable until restore has
+been tested successfully.
+```
+
+For the billing system, historical invoices and meter readings
+are business-critical data and should therefore be treated as
+persistent data requiring backup.
+
+============================================================
+18. MONITORING & OBSERVABILITY
+==============================
+
+Production monitoring should cover:
+
+APPLICATION
+
+* API availability
+* Response time
+* Error rate
+* JVM memory
+* CPU usage
+* Thread pool usage
+
+DATABASE
+
+* Connection pool usage
+* Query latency
+* CPU
+* Memory
+* Disk usage
+* Connection count
+
+BILLING
+
+* Billing job duration
+* Meters processed
+* Meters skipped
+* Failed invoices
+* Successful invoices
+
+INFRASTRUCTURE
+
+* Server health
+* Disk capacity
+* Network availability
+
+Recommended health endpoint:
+
+```
+/actuator/health
+```
+
+Logs should be centralized rather than relying only on local
+application log files.
+
+============================================================
+19. SCALING STRATEGY
+====================
+
+The system should scale in stages.
+
+50 METERS
+
+```
+Single application
+      +
+Single database
+```
+
+100 METERS
+
+```
+Larger application instance
+      +
+Single database
+
+Optional second application instance
+```
+
+300 METERS
+
+```
+Load Balancer
+      |
+   +--+--+
+   |     |
+  App   App
+   |     |
+   +--+--+
+      |
+  PostgreSQL
+```
+
+Future growth:
+
+```
+Load Balancer
+   |
++--+--+--+--+
+|  |  |  |  |
+```
+
+App App App App
+|
+Database
+|
+Read Replicas / Caching / Queue
+as required
+
+Scaling should be driven by actual workload metrics rather than
+introducing infrastructure solely because the meter count increases.
+
+============================================================
+20. RECOMMENDED CLOUD DEPLOYMENT
+================================
+
+A cloud-neutral architecture is recommended.
+
+Equivalent services can be selected from AWS, Azure or GCP.
+
+Example AWS-style implementation:
+
+```
+Route 53 / DNS
+      |
+      v
+Application Load Balancer
+      |
+      v
+ECS / EC2 / Container Runtime
+      |
+      v
+Amazon RDS PostgreSQL
+      |
+      v
+S3 Backup / Object Storage
+```
+
+Equivalent managed services can be selected on Azure or GCP.
+
+The application itself should remain containerized and
+cloud-provider independent.
+
+============================================================
+21. ENVIRONMENT CONFIGURATION
+=============================
+
+Configuration must be separated by environment.
+
+Example:
+
+LOCAL
+H2
+localhost
+development credentials
+
+QA
+PostgreSQL
+QA database
+QA credentials
+
+STAGING
+PostgreSQL
+staging database
+staging secrets
+
+PRODUCTION
+Managed PostgreSQL
+production secrets
+production configuration
+
+Credentials must never be committed to Git.
+
+Use:
+
+* Environment variables
+* Secret manager
+* CI/CD secrets
+* Cloud secret-management services
+
+============================================================
+22. DEPLOYMENT PROMOTION GATES
+==============================
+
+A build should progress through environments only after passing
+the relevant gate.
+
+LOCAL
+|
++--> Compile
++--> Unit Tests
+|
+v
+DEVELOPMENT
+|
++--> Integration Tests
++--> Code Review
+|
+v
+QA
+|
++--> Functional Tests
++--> Regression Tests
++--> Billing Validation
+|
+v
+STAGING / UAT
+|
++--> Production-like Validation
++--> Business Approval
+|
+v
+PRODUCTION
+|
++--> Smoke Test
++--> Monitoring
++--> Rollback Readiness
+
+============================================================
+23. ROLLBACK STRATEGY
+=====================
+
+Every production release should have a rollback plan.
+
+Application rollback:
+
+```
+Current Version
+      |
+      v
+New Version
+      |
+   Failure
+      |
+      v
+Previous Version
+```
+
+Database migrations require additional care.
+
+Flyway migrations should be:
+
+* Versioned
+* Forward-compatible where possible
+* Tested before production
+* Never manually edited after being applied
+
+For destructive database changes, use a multi-step migration
+strategy instead of immediately removing existing columns/data.
+
+============================================================
+24. RECOMMENDED FINAL PRODUCTION SETUP
+======================================
+
+For the assignment's expected maximum of 300 meters:
+
+```
+                INTERNET
+                   |
+                   v
+              HTTPS / TLS
+                   |
+                   v
+            Load Balancer
+                   |
+            +------+------+
+            |             |
+            v             v
+      Spring Boot     Spring Boot
+      Instance 1      Instance 2
+            |             |
+            +------+------+
+                   |
+                   v
+          Managed PostgreSQL
+                   |
+            +------+------+
+            |             |
+            v             v
+         Backups      Monitoring
+```
+
+Supporting components:
+
+* GitHub
+* CI/CD pipeline
+* Container registry
+* Secret management
+* Centralized logging
+* Monitoring/alerting
+* Automated database backups
+
+============================================================
+25. FINAL RECOMMENDATION
+========================
+
+The recommended deployment approach is deliberately proportional
+to the expected workload.
+
+50 METERS
+-> Single application instance
+-> Small managed PostgreSQL
+-> Automated backups
+-> Simple reverse proxy
+
+100 METERS
+-> Single larger application instance
+-> Managed PostgreSQL
+-> Optional second application instance for availability
+
+300 METERS
+-> Two Spring Boot application instances
+-> Load balancer
+-> Managed PostgreSQL
+-> Automated backups
+-> Centralized monitoring/logging
+-> Containerized deployment
+
+The application should remain a modular monolith initially.
+
+Microservices, message brokers, caching layers and database
+replicas should be introduced only when measured workload,
+availability requirements or future business growth justify
+their operational complexity.
+
+This approach provides:
+
+* Low initial infrastructure complexity
+* Clear deployment separation
+* Controlled promotion between environments
+* Production-grade database persistence
+* Horizontal application scalability
+* Reliable billing batch processing
+* Operational monitoring
+* Backup and recovery
+* A clear path from 50 to 300+ meters
+
+============================================================
+26. EXECUTIVE DEPLOYMENT SUMMARY
+================================
+
+Development
+|
+v
+Feature Branch
+|
+v
+Code Review
+|
+v
+Develop
+|
+v
+Shared Development
+|
+v
+QA
+|
+v
+Staging / UAT
+|
+v
+Production
+
+PRODUCTION SCALING
+
+50 Meters
+Single App
++
+PostgreSQL
+
+100 Meters
+Larger App
++
+PostgreSQL
++
+Optional HA
+
+300 Meters
+Load Balancer
+|
+App 1
+App 2
+|
+PostgreSQL
+|
+Backups
+
+ARCHITECTURAL PRINCIPLE:
+
+```
+"Start simple, deploy safely, measure continuously,
+ and scale only where the workload requires it."
+```
+
+============================================================
+END OF DEPLOYMENT STRATEGY
+==========================
