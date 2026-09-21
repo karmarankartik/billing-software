@@ -110,6 +110,7 @@ public class AppConstant {
 
     public static final String INVALID_BILLING_YEAR = "invalid year";
     public static final String INVALID_BILLING_MONTH = "invalid month";
+    public static final String INVALID_BILING_RANGE = "biling range should be less than 45 day";
 
 
     public static final String BILLING_DATE_RANGE_OUT_OF_BOUNDS =

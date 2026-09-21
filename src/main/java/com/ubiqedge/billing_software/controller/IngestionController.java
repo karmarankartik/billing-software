@@ -4,8 +4,6 @@ package com.ubiqedge.billing_software.controller;
 import com.ubiqedge.billing_software.constant.AppConstant.*;
 import com.ubiqedge.billing_software.dto.ApiResponse;
 import com.ubiqedge.billing_software.dto.WaterMeterReadingRequest;
-import com.ubiqedge.billing_software.entity.User;
-import com.ubiqedge.billing_software.entity.UserSession;
 import com.ubiqedge.billing_software.service.WaterMeterReadingService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

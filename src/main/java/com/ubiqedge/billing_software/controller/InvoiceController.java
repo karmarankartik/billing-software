@@ -1,11 +1,9 @@
 package com.ubiqedge.billing_software.controller;
 
 import com.ubiqedge.billing_software.dto.*;
-import com.ubiqedge.billing_software.entity.Invoice;
-import com.ubiqedge.billing_software.entity.InvoiceItem;
 import com.ubiqedge.billing_software.entity.User;
 import com.ubiqedge.billing_software.entity.UserSession;
-import com.ubiqedge.billing_software.exception.ApiException;
+import com.ubiqedge.billing_software.mapper.InvoiceMapper;
 import com.ubiqedge.billing_software.service.InvoiceService;
 import com.ubiqedge.billing_software.validation.InvoiceGenerationRequestValidator;
 import jakarta.validation.Valid;
@@ -14,13 +12,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
-import static com.ubiqedge.billing_software.constant.AppConstant.INVALID_BILLING_PERIOD;
-import static com.ubiqedge.billing_software.constant.AppConstant.INVOICES_GENERATED_SUCCESSFULLY;
+import static com.ubiqedge.billing_software.constant.AppConstant.*;
 
 @RestController
 @RequestMapping("/api")
@@ -29,7 +24,12 @@ public class InvoiceController {
     @Autowired
     InvoiceGenerationRequestValidator validator;
 
+    @Autowired
+    InvoiceMapper mapper;
+
     private final InvoiceService invoiceService;
+
+
 
     public InvoiceController(InvoiceService invoiceService) {
         this.invoiceService = invoiceService;
@@ -104,7 +104,7 @@ public class InvoiceController {
         return ResponseEntity.ok(
                 new ApiResponse<>(
                         true,
-                        "Billing generation job fetched successfully",
+                        SUCCESS,
                         HttpStatus.OK,
                         response
                 )
@@ -116,36 +116,23 @@ public class InvoiceController {
 // ============================================================
 
     @GetMapping("/invoices")
-    public ResponseEntity<ApiResponse<List<Invoice>>>
+    public ResponseEntity<ApiResponse<List<InvoiceResponse>>>
     getMyInvoices(
             @RequestAttribute("userSession")
             UserSession userSession,
 
             @RequestAttribute("user")
-            User loggedInUser,
+            User loggedInUser) {
 
-            @RequestParam
-            LocalDate from,
+        List<InvoiceResponse> response = mapper.getInvoicesByUserId(loggedInUser.getId());
 
-            @RequestParam
-            LocalDate to) {
-
-
-
-        List<Invoice> invoices =
-                invoiceService.getInvoicesForUser(
-                        userSession,
-                        loggedInUser,
-                        from,
-                        to
-                );
 
         return ResponseEntity.ok(
                 new ApiResponse<>(
                         true,
-                        "Invoices fetched successfully",
+                        INVOICES_GENERATED_SUCCESSFULLY,
                         HttpStatus.OK,
-                        invoices
+                        response
                 )
         );
     }
@@ -166,23 +153,27 @@ public class InvoiceController {
 
             @Valid
             @RequestBody
-            GenerateInvoiceRequest request) {
+            MonthlyInvoiceGenerationRequest request) {
 
-        if (!request.billingPeriodStart().isBefore(request.billingPeriodEnd()) || ChronoUnit.DAYS.between(request.billingPeriodStart(), request.billingPeriodEnd()) > 45)
-            throw new ApiException(INVALID_BILLING_PERIOD, HttpStatus.BAD_REQUEST);
+        GenerateInvoiceRequest generateInvoiceRequest =
+                validator
+                        .validateAndBuild(request);
+
+/*        if (!request.billingPeriodStart().isBefore(request.billingPeriodEnd()) || ChronoUnit.DAYS.between(request.billingPeriodStart(), request.billingPeriodEnd()) > 45)
+            throw new ApiException(INVALID_BILING_RANGE, HttpStatus.BAD_REQUEST);*/
 
         UserInvoiceGenerationResponse response =
                 invoiceService.generateInvoicesForUser(
                         userSession,
                         loggedInUser,
-                        request.billingPeriodStart(),
-                        request.billingPeriodEnd()
+                        generateInvoiceRequest.billingPeriodStart(),
+                        generateInvoiceRequest.billingPeriodEnd()
                 );
 
         return ResponseEntity.ok(
                 new ApiResponse<>(
                         true,
-                        "Invoices generated successfully",
+                        INVOICES_GENERATED_SUCCESSFULLY,
                         HttpStatus.OK,
                         response
                 )
@@ -193,7 +184,7 @@ public class InvoiceController {
     // USER - INVOICE ITEMS
     // ============================================================
 
-    @GetMapping("/invoices/{invoiceId}/items")
+   /* @GetMapping("/invoices/{invoiceId}/items")
     public ResponseEntity<ApiResponse<List<InvoiceItem>>>
     getInvoiceItems(
             @RequestAttribute("userSession")
@@ -215,10 +206,10 @@ public class InvoiceController {
         return ResponseEntity.ok(
                 new ApiResponse<>(
                         true,
-                        "Invoice details fetched successfully",
+                        SUCCESS,
                         HttpStatus.OK,
                         items
                 )
         );
-    }
+    }*/
 }

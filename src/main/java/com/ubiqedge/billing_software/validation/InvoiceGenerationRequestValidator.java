@@ -6,9 +6,11 @@ import com.ubiqedge.billing_software.exception.ApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 
-import static com.ubiqedge.billing_software.constant.AppConstant.*;
+import static com.ubiqedge.billing_software.constant.AppConstant.INVALID_BILLING_MONTH;
+import static com.ubiqedge.billing_software.constant.AppConstant.INVALID_BILLING_YEAR;
 
 @Component
 public class InvoiceGenerationRequestValidator {
@@ -35,38 +37,63 @@ public class InvoiceGenerationRequestValidator {
             );
         }
 
-        int currentYear =
-                LocalDate.now().getYear();
+        LocalDate currentMonth =
+                LocalDate.now().withDayOfMonth(1);
 
-        if (Math.abs(request.year() - currentYear)
-                > MAX_YEAR_DIFFERENCE) {
+        LocalDate requestedMonth;
 
+        try {
+            requestedMonth = LocalDate.of(
+                    request.year(),
+                    request.month(),
+                    1
+            );
+        } catch (DateTimeException exception) {
             throw new ApiException(
                     INVALID_BILLING_YEAR,
                     HttpStatus.BAD_REQUEST
             );
         }
 
-        LocalDate from =
-                LocalDate.of(
-                        request.year(),
-                        request.month(),
-                        1
-                );
+        /*
+         * Billing cycle must be completed.
+         *
+         * Example:
+         * Today: 2026-10-10
+         *
+         * 2026-09 -> valid
+         * 2026-10 -> invalid
+         */
+        if (!requestedMonth.isBefore(currentMonth)) {
+            throw new ApiException(
+                    INVALID_BILLING_MONTH,
+                    HttpStatus.BAD_REQUEST
+            );
+        }
 
         /*
-         * Billing period end is exclusive.
+         * Billing month cannot be older than 2 years.
          *
-         * January:
-         * 2026-01-01 → 2026-02-01
+         * Example:
+         * Today: 2026-10-10
          *
-         * February 2024:
-         * 2024-02-01 → 2024-03-01
+         * Earliest allowed month: 2024-10
          *
-         * Leap year is handled automatically by LocalDate.
+         * 2024-10 -> valid
+         * 2024-09 -> invalid
          */
-        LocalDate to =
-                from.plusMonths(1);
+        LocalDate earliestAllowedMonth =
+                currentMonth.minusYears(MAX_YEAR_DIFFERENCE);
+
+        if (requestedMonth.isBefore(earliestAllowedMonth)) {
+            throw new ApiException(
+                    INVALID_BILLING_YEAR,
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+
+        LocalDate from = requestedMonth;
+        LocalDate to = requestedMonth.plusMonths(1);
 
         return new GenerateInvoiceRequest(
                 from,
