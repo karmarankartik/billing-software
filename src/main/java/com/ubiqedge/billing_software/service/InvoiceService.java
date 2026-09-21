@@ -621,7 +621,7 @@ public class InvoiceService {
     // COMMON INVOICE GENERATION
     // ============================================================
 
-    private InvoiceGenerationAttempt generateInvoiceForAssignment(
+   /* private InvoiceGenerationAttempt generateInvoiceForAssignment(
             WaterMeterAssignment assignment,
             LocalDate from,
             LocalDate to) {
@@ -638,13 +638,13 @@ public class InvoiceService {
             );
         }
 
-        /*
+        *//*
          * The requested billing period must be completely contained
          * inside the assignment period.
          *
          * assignedAt is inclusive.
          * unassignedAt is exclusive.
-         */
+         *//*
         LocalDate assignmentStart =
                 assignment.getAssignedAt()
                         .atZone(ZoneOffset.UTC)
@@ -669,6 +669,251 @@ public class InvoiceService {
 
         LocalDate calculationFrom = from;
         LocalDate calculationTo = to;
+
+        WaterMeterReading fromReading =
+                findLatestTotalReadingForDay(
+                        assignment.getWaterMeterId(),
+                        calculationFrom
+                );
+
+        if (fromReading == null) {
+
+            return InvoiceGenerationAttempt.skipped(
+                    FROM_TOTAL_READING_NOT_FOUND
+            );
+        }
+
+        WaterMeterReading toReading =
+                findLatestTotalReadingForDay(
+                        assignment.getWaterMeterId(),
+                        calculationTo
+                );
+
+        if (toReading == null) {
+
+            return InvoiceGenerationAttempt.skipped(
+                    TO_TOTAL_READING_NOT_FOUND
+            );
+        }
+
+        if (toReading.getReadingValue()
+                .compareTo(
+                        fromReading.getReadingValue()
+                ) < 0) {
+
+            return InvoiceGenerationAttempt.skipped(
+                    INVALID_TOTAL_READING
+            );
+        }
+
+        List<PlanPeriod> planPeriods =
+                createPlanPeriods(
+                        assignment.getWaterMeterId(),
+                        calculationFrom,
+                        calculationTo
+                );
+
+        if (planPeriods.isEmpty()) {
+
+            return InvoiceGenerationAttempt.skipped(
+                    BILLING_PLAN_NOT_FOUND
+            );
+        }
+
+        List<InvoiceItemCalculation> calculations =
+                calculateInvoiceItems(
+                        assignment.getWaterMeterId(),
+                        planPeriods
+                );
+
+        if (calculations.isEmpty()) {
+
+            return InvoiceGenerationAttempt.skipped(
+                    BILLING_PLAN_BOUNDARY_READING_NOT_FOUND
+            );
+        }
+
+        BigDecimal totalConsumption =
+                calculations.stream()
+                        .map(InvoiceItemCalculation::consumption)
+                        .reduce(
+                                BigDecimal.ZERO,
+                                BigDecimal::add
+                        );
+
+        BigDecimal expectedConsumption =
+                toReading.getReadingValue()
+                        .subtract(
+                                fromReading.getReadingValue()
+                        );
+
+        if (totalConsumption.compareTo(
+                expectedConsumption
+        ) != 0) {
+
+            return InvoiceGenerationAttempt.skipped(
+                    CONSUMPTION_CALCULATION_FAILED
+            );
+        }
+
+        BigDecimal totalAmount =
+                calculations.stream()
+                        .map(InvoiceItemCalculation::amount)
+                        .reduce(
+                                BigDecimal.ZERO,
+                                BigDecimal::add
+                        )
+                        .setScale(
+                                4,
+                                RoundingMode.HALF_UP
+                        );
+
+        Instant now = Instant.now();
+
+        Invoice invoice =
+                new Invoice();
+
+        invoice.setUserId(
+                assignment.getUserId()
+        );
+
+        invoice.setWaterMeterId(
+                assignment.getWaterMeterId()
+        );
+
+        invoice.setAssignmentId(
+                assignment.getId()
+        );
+
+        invoice.setBillingPeriodStart(from);
+        invoice.setBillingPeriodEnd(to);
+
+        invoice.setTotalConsumption(
+                totalConsumption
+        );
+
+        invoice.setTotalAmount(
+                totalAmount
+        );
+
+        invoice.setGeneratedAt(now);
+        invoice.setCreatedAt(now);
+
+        Invoice savedInvoice =
+                invoiceRepository.save(invoice);
+
+        List<InvoiceItem> items =
+                new ArrayList<>();
+
+        for (InvoiceItemCalculation calculation :
+                calculations) {
+
+            InvoiceItem item =
+                    new InvoiceItem();
+
+            item.setInvoiceId(
+                    savedInvoice.getId()
+            );
+
+            item.setBillingPlanId(
+                    calculation.billingPlanId()
+            );
+
+            *//*
+             * segment_start and segment_end are DATE columns
+             * and InvoiceItem uses LocalDate.
+             *//*
+            item.setSegmentStart(
+                    calculation.segmentStart()
+            );
+
+            item.setSegmentEnd(
+                    calculation.segmentEnd()
+            );
+
+            item.setOpeningReading(
+                    calculation.openingReading()
+            );
+
+            item.setClosingReading(
+                    calculation.closingReading()
+            );
+
+            item.setConsumption(
+                    calculation.consumption()
+            );
+
+            item.setAmount(
+                    calculation.amount()
+            );
+
+            item.setCreatedAt(now);
+
+            items.add(item);
+        }
+
+        invoiceItemRepository.saveAll(items);
+
+        return InvoiceGenerationAttempt.generated();
+    }*/
+
+
+    private InvoiceGenerationAttempt generateInvoiceForAssignment(
+            WaterMeterAssignment assignment,
+            LocalDate from,
+            LocalDate to) {
+
+        if (invoiceRepository
+                .existsByAssignmentIdAndBillingPeriodStartAndBillingPeriodEnd(
+                        assignment.getId(),
+                        from,
+                        to
+                )) {
+
+            return InvoiceGenerationAttempt.skipped(
+                    INVOICE_ALREADY_EXISTS
+            );
+        }
+
+        /*
+         * The billing calculation uses the intersection between
+         * the requested billing period and the assignment period.
+         *
+         * assignedAt is inclusive.
+         * unassignedAt is exclusive.
+         */
+        LocalDate assignmentStart =
+                assignment.getAssignedAt()
+                        .atZone(ZoneOffset.UTC)
+                        .toLocalDate();
+
+        LocalDate assignmentEnd =
+                assignment.getUnassignedAt() == null
+                        ? null
+                        : assignment.getUnassignedAt()
+                          .atZone(ZoneOffset.UTC)
+                          .toLocalDate();
+
+        LocalDate calculationFrom =
+                from.isAfter(assignmentStart)
+                        ? from
+                        : assignmentStart;
+
+        LocalDate calculationTo =
+                assignmentEnd == null || to.isBefore(assignmentEnd)
+                        ? to
+                        : assignmentEnd;
+
+        /*
+         * No overlap between the requested billing period
+         * and the assignment period.
+         */
+        if (!calculationFrom.isBefore(calculationTo)) {
+
+            return InvoiceGenerationAttempt.skipped(
+                    BILLING_DATE_RANGE_OUT_OF_BOUNDS
+            );
+        }
 
         WaterMeterReading fromReading =
                 findLatestTotalReadingForDay(
@@ -856,6 +1101,8 @@ public class InvoiceService {
 
         return InvoiceGenerationAttempt.generated();
     }
+
+
 
     // ============================================================
     // PLAN PERIOD CREATION
