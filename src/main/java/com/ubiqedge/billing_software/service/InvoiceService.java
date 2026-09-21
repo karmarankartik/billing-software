@@ -1,12 +1,33 @@
-package com.ubiqedge.billing_software.service;
+
+        package com.ubiqedge.billing_software.service;
 
 import com.ubiqedge.billing_software.dto.BillingGenerationJobResponse;
 import com.ubiqedge.billing_software.dto.InvoiceGenerationResponse;
 import com.ubiqedge.billing_software.dto.SkippedMeterResponse;
 import com.ubiqedge.billing_software.dto.UserInvoiceGenerationResponse;
-import com.ubiqedge.billing_software.entity.*;
+import com.ubiqedge.billing_software.dto.UserInvoiceResponse;
+import com.ubiqedge.billing_software.entity.BillingGenerationJob;
+import com.ubiqedge.billing_software.entity.BillingGenerationJobSkip;
+import com.ubiqedge.billing_software.entity.BillingPlan;
+import com.ubiqedge.billing_software.entity.BillingPlanSlab;
+import com.ubiqedge.billing_software.entity.Invoice;
+import com.ubiqedge.billing_software.entity.InvoiceItem;
+import com.ubiqedge.billing_software.entity.User;
+import com.ubiqedge.billing_software.entity.UserSession;
+import com.ubiqedge.billing_software.entity.WaterMeterAssignment;
+import com.ubiqedge.billing_software.entity.WaterMeterBillingPlan;
+import com.ubiqedge.billing_software.entity.WaterMeterReading;
 import com.ubiqedge.billing_software.exception.ApiException;
-import com.ubiqedge.billing_software.repository.*;
+import com.ubiqedge.billing_software.repository.BillingGenerationJobRepository;
+import com.ubiqedge.billing_software.repository.BillingGenerationJobSkipRepository;
+import com.ubiqedge.billing_software.repository.BillingPlanRepository;
+import com.ubiqedge.billing_software.repository.BillingPlanSlabRepository;
+import com.ubiqedge.billing_software.repository.InvoiceItemRepository;
+import com.ubiqedge.billing_software.repository.InvoiceRepository;
+import com.ubiqedge.billing_software.repository.WaterMeterAssignmentRepository;
+import com.ubiqedge.billing_software.repository.WaterMeterBillingPlanRepository;
+import com.ubiqedge.billing_software.repository.WaterMeterReadingRepository;
+import com.ubiqedge.billing_software.repository.WaterMeterRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -57,16 +78,24 @@ public class InvoiceService {
 
         this.invoiceRepository = invoiceRepository;
         this.invoiceItemRepository = invoiceItemRepository;
-        this.waterMeterAssignmentRepository = waterMeterAssignmentRepository;
-        this.waterMeterReadingRepository = waterMeterReadingRepository;
-        this.waterMeterBillingPlanRepository = waterMeterBillingPlanRepository;
-        this.billingPlanRepository = billingPlanRepository;
-        this.billingPlanSlabRepository = billingPlanSlabRepository;
-        this.billingGenerationJobRepository = billingGenerationJobRepository;
+        this.waterMeterAssignmentRepository =
+                waterMeterAssignmentRepository;
+        this.waterMeterReadingRepository =
+                waterMeterReadingRepository;
+        this.waterMeterBillingPlanRepository =
+                waterMeterBillingPlanRepository;
+        this.billingPlanRepository =
+                billingPlanRepository;
+        this.billingPlanSlabRepository =
+                billingPlanSlabRepository;
+        this.billingGenerationJobRepository =
+                billingGenerationJobRepository;
         this.billingGenerationJobSkipRepository =
                 billingGenerationJobSkipRepository;
-        this.invoiceGenerationExecutor = invoiceGenerationExecutor;
-        this.waterMeterRepository = waterMeterRepository;
+        this.invoiceGenerationExecutor =
+                invoiceGenerationExecutor;
+        this.waterMeterRepository =
+                waterMeterRepository;
     }
 
     // ============================================================
@@ -95,7 +124,9 @@ public class InvoiceService {
 
         Instant now = Instant.now();
 
-        BillingGenerationJob job = new BillingGenerationJob();
+        BillingGenerationJob job =
+                new BillingGenerationJob();
+
         job.setBillingPeriodStart(from);
         job.setBillingPeriodEnd(to);
         job.setStatus("RUNNING");
@@ -133,8 +164,10 @@ public class InvoiceService {
             LocalDate to) {
 
         try {
+
             Instant periodStart =
-                    from.atStartOfDay(ZoneOffset.UTC).toInstant();
+                    from.atStartOfDay(ZoneOffset.UTC)
+                            .toInstant();
 
             Instant periodEnd =
                     to.plusDays(1)
@@ -157,18 +190,22 @@ public class InvoiceService {
                 InvoiceGenerationAttempt attempt;
 
                 try {
-                    attempt = generateInvoiceForAssignment(
-                            assignment,
-                            from,
-                            to
-                    );
+
+                    attempt =
+                            generateInvoiceForAssignment(
+                                    assignment,
+                                    from,
+                                    to
+                            );
+
                 } catch (Exception exception) {
 
-                    attempt = InvoiceGenerationAttempt.skipped(
-                            exception.getMessage() == null
-                                    ? BILLING_GENERATION_FAILED
-                                    : exception.getMessage()
-                    );
+                    attempt =
+                            InvoiceGenerationAttempt.skipped(
+                                    exception.getMessage() == null
+                                            ? BILLING_GENERATION_FAILED
+                                            : exception.getMessage()
+                            );
                 }
 
                 metersProcessed++;
@@ -185,11 +222,18 @@ public class InvoiceService {
                             new BillingGenerationJobSkip();
 
                     skip.setJobId(jobId);
+
                     skip.setWaterMeterId(
                             assignment.getWaterMeterId()
                     );
-                    skip.setReason(attempt.reason());
-                    skip.setCreatedAt(Instant.now());
+
+                    skip.setReason(
+                            attempt.reason()
+                    );
+
+                    skip.setCreatedAt(
+                            Instant.now()
+                    );
 
                     billingGenerationJobSkipRepository.save(skip);
                 }
@@ -212,12 +256,15 @@ public class InvoiceService {
         } catch (Exception exception) {
 
             BillingGenerationJob job =
-                    billingGenerationJobRepository.findById(jobId)
+                    billingGenerationJobRepository
+                            .findById(jobId)
                             .orElse(null);
 
             if (job != null) {
+
                 job.setStatus("FAILED");
                 job.setCompletedAt(Instant.now());
+
                 billingGenerationJobRepository.save(job);
             }
         }
@@ -230,11 +277,14 @@ public class InvoiceService {
             int metersSkipped) {
 
         BillingGenerationJob job =
-                billingGenerationJobRepository.findById(jobId)
-                        .orElseThrow(() -> new ApiException(
-                                BILLING_GENERATION_JOB_NOT_FOUND,
-                                HttpStatus.BAD_REQUEST
-                        ));
+                billingGenerationJobRepository
+                        .findById(jobId)
+                        .orElseThrow(() ->
+                                new ApiException(
+                                        BILLING_GENERATION_JOB_NOT_FOUND,
+                                        HttpStatus.BAD_REQUEST
+                                )
+                        );
 
         job.setMetersProcessed(metersProcessed);
         job.setInvoicesGenerated(invoicesGenerated);
@@ -250,11 +300,14 @@ public class InvoiceService {
             int metersSkipped) {
 
         BillingGenerationJob job =
-                billingGenerationJobRepository.findById(jobId)
-                        .orElseThrow(() -> new ApiException(
-                                BILLING_GENERATION_JOB_NOT_FOUND,
-                                HttpStatus.BAD_REQUEST
-                        ));
+                billingGenerationJobRepository
+                        .findById(jobId)
+                        .orElseThrow(() ->
+                                new ApiException(
+                                        BILLING_GENERATION_JOB_NOT_FOUND,
+                                        HttpStatus.BAD_REQUEST
+                                )
+                        );
 
         job.setMetersProcessed(metersProcessed);
         job.setInvoicesGenerated(invoicesGenerated);
@@ -277,11 +330,14 @@ public class InvoiceService {
         validateAdmin(userSession, loggedInUser);
 
         BillingGenerationJob job =
-                billingGenerationJobRepository.findById(jobId)
-                        .orElseThrow(() -> new ApiException(
-                                BILLING_GENERATION_JOB_NOT_FOUND,
-                                HttpStatus.BAD_REQUEST
-                        ));
+                billingGenerationJobRepository
+                        .findById(jobId)
+                        .orElseThrow(() ->
+                                new ApiException(
+                                        BILLING_GENERATION_JOB_NOT_FOUND,
+                                        HttpStatus.BAD_REQUEST
+                                )
+                        );
 
         List<SkippedMeterResponse> skippedMeters =
                 billingGenerationJobSkipRepository
@@ -310,7 +366,7 @@ public class InvoiceService {
     }
 
     // ============================================================
-    // USER - VIEW / GET EXISTING INVOICES
+    // USER - VIEW EXISTING INVOICES
     // ============================================================
 
     public List<Invoice> getInvoicesForUser(
@@ -323,7 +379,8 @@ public class InvoiceService {
         validateBillingPeriod(from, to);
 
         Instant periodStart =
-                from.atStartOfDay(ZoneOffset.UTC).toInstant();
+                from.atStartOfDay(ZoneOffset.UTC)
+                        .toInstant();
 
         Instant periodEnd =
                 to.plusDays(1)
@@ -338,7 +395,8 @@ public class InvoiceService {
                                 periodEnd
                         );
 
-        List<Invoice> invoices = new ArrayList<>();
+        List<Invoice> invoices =
+                new ArrayList<>();
 
         for (WaterMeterAssignment assignment : assignments) {
 
@@ -369,7 +427,8 @@ public class InvoiceService {
         validateBillingPeriod(from, to);
 
         Instant periodStart =
-                from.atStartOfDay(ZoneOffset.UTC).toInstant();
+                from.atStartOfDay(ZoneOffset.UTC)
+                        .toInstant();
 
         Instant periodEnd =
                 to.plusDays(1)
@@ -384,8 +443,11 @@ public class InvoiceService {
                                 periodEnd
                         );
 
-        List<Invoice> invoices = new ArrayList<>();
-        List<SkippedMeterResponse> skippedMeters = new ArrayList<>();
+        List<UserInvoiceResponse> invoices =
+                new ArrayList<>();
+
+        List<SkippedMeterResponse> skippedMeters =
+                new ArrayList<>();
 
         int metersProcessed = 0;
         int invoicesGenerated = 0;
@@ -395,10 +457,6 @@ public class InvoiceService {
 
             metersProcessed++;
 
-            /*
-             * Exact snapshot already exists.
-             * Return the existing immutable invoice.
-             */
             Invoice existingInvoice =
                     invoiceRepository
                             .findByAssignmentIdAndBillingPeriodStartAndBillingPeriodEnd(
@@ -410,7 +468,12 @@ public class InvoiceService {
 
             if (existingInvoice != null) {
 
-                invoices.add(existingInvoice);
+                invoices.add(
+                        createUserInvoiceResponse(
+                                existingInvoice
+                        )
+                );
+
                 invoicesGenerated++;
 
                 continue;
@@ -420,18 +483,15 @@ public class InvoiceService {
 
             try {
 
-                attempt = generateInvoiceForAssignment(
-                        assignment,
-                        from,
-                        to
-                );
+                attempt =
+                        generateInvoiceForAssignment(
+                                assignment,
+                                from,
+                                to
+                        );
 
             } catch (DataIntegrityViolationException exception) {
 
-                /*
-                 * Another request may have created the same exact
-                 * snapshot concurrently.
-                 */
                 Invoice concurrentInvoice =
                         invoiceRepository
                                 .findByAssignmentIdAndBillingPeriodStartAndBillingPeriodEnd(
@@ -443,7 +503,12 @@ public class InvoiceService {
 
                 if (concurrentInvoice != null) {
 
-                    invoices.add(concurrentInvoice);
+                    invoices.add(
+                            createUserInvoiceResponse(
+                                    concurrentInvoice
+                            )
+                    );
+
                     invoicesGenerated++;
 
                     continue;
@@ -513,9 +578,15 @@ public class InvoiceService {
                 continue;
             }
 
-            invoices.add(savedInvoice);
+            invoices.add(
+                    createUserInvoiceResponse(
+                            savedInvoice
+                    )
+            );
+
             invoicesGenerated++;
         }
+
         long totalMeters =
                 waterMeterRepository.countMetersForUser(
                         loggedInUser.getId()
@@ -528,6 +599,21 @@ public class InvoiceService {
                 invoicesGenerated,
                 metersSkipped,
                 skippedMeters
+        );
+    }
+
+    private UserInvoiceResponse createUserInvoiceResponse(
+            Invoice invoice) {
+
+        List<InvoiceItem> items =
+                invoiceItemRepository
+                        .findByInvoiceIdOrderBySegmentStartAsc(
+                                invoice.getId()
+                        );
+
+        return new UserInvoiceResponse(
+                invoice,
+                items
         );
     }
 
@@ -552,25 +638,19 @@ public class InvoiceService {
             );
         }
 
+        /*
+         * The requested billing period must be completely contained
+         * inside the assignment period.
+         *
+         * assignedAt is inclusive.
+         * unassignedAt is exclusive.
+         */
         LocalDate assignmentStart =
                 assignment.getAssignedAt()
                         .atZone(ZoneOffset.UTC)
                         .toLocalDate();
 
         LocalDate assignmentEnd =
-                assignment.getUnassignedAt() == null
-                        ? to
-                        : assignment.getUnassignedAt()
-                          .atZone(ZoneOffset.UTC)
-                          .toLocalDate()
-                          .minusDays(1);
-
-         assignmentStart =
-                assignment.getAssignedAt()
-                        .atZone(ZoneOffset.UTC)
-                        .toLocalDate();
-
-         assignmentEnd =
                 assignment.getUnassignedAt() == null
                         ? null
                         : assignment.getUnassignedAt()
@@ -579,7 +659,8 @@ public class InvoiceService {
                           .minusDays(1);
 
         if (from.isBefore(assignmentStart)
-                || (assignmentEnd != null && to.isAfter(assignmentEnd))) {
+                || (assignmentEnd != null
+                && to.isAfter(assignmentEnd))) {
 
             return InvoiceGenerationAttempt.skipped(
                     BILLING_DATE_RANGE_OUT_OF_BOUNDS
@@ -589,16 +670,8 @@ public class InvoiceService {
         LocalDate calculationFrom = from;
         LocalDate calculationTo = to;
 
-
-        if (calculationFrom.isAfter(calculationTo)) {
-
-            return InvoiceGenerationAttempt.skipped(
-                    ASSIGNMENT_NOT_ACTIVE_FOR_BILLING_PERIOD
-            );
-        }
-
         WaterMeterReading fromReading =
-                findLatestTotalReading(
+                findLatestTotalReadingForDay(
                         assignment.getWaterMeterId(),
                         calculationFrom
                 );
@@ -611,7 +684,7 @@ public class InvoiceService {
         }
 
         WaterMeterReading toReading =
-                findLatestTotalReading(
+                findLatestTotalReadingForDay(
                         assignment.getWaterMeterId(),
                         calculationTo
                 );
@@ -624,7 +697,9 @@ public class InvoiceService {
         }
 
         if (toReading.getReadingValue()
-                .compareTo(fromReading.getReadingValue()) < 0) {
+                .compareTo(
+                        fromReading.getReadingValue()
+                ) < 0) {
 
             return InvoiceGenerationAttempt.skipped(
                     INVALID_TOTAL_READING
@@ -672,7 +747,9 @@ public class InvoiceService {
                                 fromReading.getReadingValue()
                         );
 
-        if (totalConsumption.compareTo(expectedConsumption) != 0) {
+        if (totalConsumption.compareTo(
+                expectedConsumption
+        ) != 0) {
 
             return InvoiceGenerationAttempt.skipped(
                     CONSUMPTION_CALCULATION_FAILED
@@ -693,33 +770,59 @@ public class InvoiceService {
 
         Instant now = Instant.now();
 
-        Invoice invoice = new Invoice();
+        Invoice invoice =
+                new Invoice();
 
-        invoice.setUserId(assignment.getUserId());
-        invoice.setWaterMeterId(assignment.getWaterMeterId());
-        invoice.setAssignmentId(assignment.getId());
+        invoice.setUserId(
+                assignment.getUserId()
+        );
+
+        invoice.setWaterMeterId(
+                assignment.getWaterMeterId()
+        );
+
+        invoice.setAssignmentId(
+                assignment.getId()
+        );
+
         invoice.setBillingPeriodStart(from);
         invoice.setBillingPeriodEnd(to);
-        invoice.setTotalConsumption(totalConsumption);
-        invoice.setTotalAmount(totalAmount);
+
+        invoice.setTotalConsumption(
+                totalConsumption
+        );
+
+        invoice.setTotalAmount(
+                totalAmount
+        );
+
         invoice.setGeneratedAt(now);
         invoice.setCreatedAt(now);
 
         Invoice savedInvoice =
                 invoiceRepository.save(invoice);
 
-        List<InvoiceItem> items = new ArrayList<>();
+        List<InvoiceItem> items =
+                new ArrayList<>();
 
-        for (InvoiceItemCalculation calculation : calculations) {
+        for (InvoiceItemCalculation calculation :
+                calculations) {
 
-            InvoiceItem item = new InvoiceItem();
+            InvoiceItem item =
+                    new InvoiceItem();
 
-            item.setInvoiceId(savedInvoice.getId());
+            item.setInvoiceId(
+                    savedInvoice.getId()
+            );
 
             item.setBillingPlanId(
                     calculation.billingPlanId()
             );
 
+            /*
+             * segment_start and segment_end are DATE columns
+             * and InvoiceItem uses LocalDate.
+             */
             item.setSegmentStart(
                     calculation.segmentStart()
             );
@@ -773,7 +876,8 @@ public class InvoiceService {
             return List.of();
         }
 
-        List<LocalDate> boundaries = new ArrayList<>();
+        List<LocalDate> boundaries =
+                new ArrayList<>();
 
         boundaries.add(from);
 
@@ -789,17 +893,24 @@ public class InvoiceService {
 
         boundaries.add(to);
 
-        boundaries = boundaries.stream()
-                .distinct()
-                .sorted()
-                .toList();
+        boundaries =
+                boundaries.stream()
+                        .distinct()
+                        .sorted()
+                        .toList();
 
-        List<PlanPeriod> periods = new ArrayList<>();
+        List<PlanPeriod> periods =
+                new ArrayList<>();
 
-        for (int i = 0; i < boundaries.size() - 1; i++) {
+        for (int i = 0;
+             i < boundaries.size() - 1;
+             i++) {
 
-            LocalDate segmentStart = boundaries.get(i);
-            LocalDate segmentEnd = boundaries.get(i + 1);
+            LocalDate segmentStart =
+                    boundaries.get(i);
+
+            LocalDate segmentEnd =
+                    boundaries.get(i + 1);
 
             WaterMeterBillingPlan mapping =
                     findPlanForDate(
@@ -872,13 +983,13 @@ public class InvoiceService {
         for (PlanPeriod period : planPeriods) {
 
             WaterMeterReading openingReading =
-                    findLatestTotalReading(
+                    findLatestTotalReadingForDay(
                             waterMeterId,
                             period.segmentStart()
                     );
 
             WaterMeterReading closingReading =
-                    findLatestTotalReading(
+                    findLatestTotalReadingForDay(
                             waterMeterId,
                             period.segmentEnd()
                     );
@@ -890,13 +1001,16 @@ public class InvoiceService {
             }
 
             if (closingReading.getReadingValue()
-                    .compareTo(openingReading.getReadingValue()) < 0) {
+                    .compareTo(
+                            openingReading.getReadingValue()
+                    ) < 0) {
 
                 return List.of();
             }
 
             BillingPlan billingPlan =
-                    billingPlanRepository.findById(
+                    billingPlanRepository
+                            .findById(
                                     period.billingPlanId()
                             )
                             .orElse(null);
@@ -916,13 +1030,22 @@ public class InvoiceService {
 
             BigDecimal amount;
 
-            if ("FIXED".equals(billingPlan.getPlanType())) {
+            if ("FIXED".equals(
+                    billingPlan.getPlanType()
+            )) {
 
-                amount = consumption.multiply(
-                        billingPlan.getPricePerUnit()
-                );
+                if (billingPlan.getPricePerUnit() == null) {
+                    return List.of();
+                }
 
-            } else if ("SLAB".equals(billingPlan.getPlanType())) {
+                amount =
+                        consumption.multiply(
+                                billingPlan.getPricePerUnit()
+                        );
+
+            } else if ("SLAB".equals(
+                    billingPlan.getPlanType()
+            )) {
 
                 List<BillingPlanSlab> slabs =
                         billingPlanSlabRepository
@@ -930,36 +1053,28 @@ public class InvoiceService {
                                         billingPlan.getId()
                                 );
 
-                amount = calculateSlabAmount(
-                        consumption,
-                        slabs
-                );
+                amount =
+                        calculateSlabAmount(
+                                consumption,
+                                slabs
+                        );
 
             } else {
 
                 return List.of();
             }
 
-            amount = amount.setScale(
-                    4,
-                    RoundingMode.HALF_UP
-            );
-
-            Instant segmentStart =
-                    period.segmentStart()
-                            .atStartOfDay(ZoneOffset.UTC)
-                            .toInstant();
-
-            Instant segmentEnd =
-                    period.segmentEnd()
-                            .atStartOfDay(ZoneOffset.UTC)
-                            .toInstant();
+            amount =
+                    amount.setScale(
+                            4,
+                            RoundingMode.HALF_UP
+                    );
 
             calculations.add(
                     new InvoiceItemCalculation(
                             period.billingPlanId(),
-                            segmentStart,
-                            segmentEnd,
+                            period.segmentStart(),
+                            period.segmentEnd(),
                             openingReading.getReadingValue(),
                             closingReading.getReadingValue(),
                             consumption,
@@ -975,7 +1090,7 @@ public class InvoiceService {
     // READING
     // ============================================================
 
-    private WaterMeterReading findLatestTotalReading(
+    private WaterMeterReading findLatestTotalReadingForDay(
             UUID waterMeterId,
             LocalDate date) {
 
@@ -1009,7 +1124,8 @@ public class InvoiceService {
             return BigDecimal.ZERO;
         }
 
-        BigDecimal amount = BigDecimal.ZERO;
+        BigDecimal amount =
+                BigDecimal.ZERO;
 
         for (BillingPlanSlab slab : slabs) {
 
@@ -1023,35 +1139,50 @@ public class InvoiceService {
 
             if (upperBound == null) {
 
-                if (consumption.compareTo(lowerBound) <= 0) {
+                if (consumption.compareTo(
+                        lowerBound
+                ) <= 0) {
+
                     break;
                 }
 
                 slabUnits =
-                        consumption.subtract(lowerBound);
+                        consumption.subtract(
+                                lowerBound
+                        );
 
             } else {
 
-                if (consumption.compareTo(lowerBound) <= 0) {
+                if (consumption.compareTo(
+                        lowerBound
+                ) <= 0) {
+
                     continue;
                 }
 
                 BigDecimal upperLimit =
-                        consumption.compareTo(upperBound) < 0
+                        consumption.compareTo(
+                                upperBound
+                        ) < 0
                                 ? consumption
                                 : upperBound;
 
                 slabUnits =
-                        upperLimit.subtract(lowerBound);
+                        upperLimit.subtract(
+                                lowerBound
+                        );
             }
 
-            if (slabUnits.compareTo(BigDecimal.ZERO) > 0) {
+            if (slabUnits.compareTo(
+                    BigDecimal.ZERO
+            ) > 0) {
 
-                amount = amount.add(
-                        slabUnits.multiply(
-                                slab.getPricePerUnit()
-                        )
-                );
+                amount =
+                        amount.add(
+                                slabUnits.multiply(
+                                        slab.getPricePerUnit()
+                                )
+                        );
             }
         }
 
@@ -1067,16 +1198,24 @@ public class InvoiceService {
             User loggedInUser,
             UUID invoiceId) {
 
-        validateUser(userSession, loggedInUser);
+        validateUser(
+                userSession,
+                loggedInUser
+        );
 
         Invoice invoice =
-                invoiceRepository.findById(invoiceId)
-                        .orElseThrow(() -> new ApiException(
-                                INVOICE_NOT_FOUND,
-                                HttpStatus.BAD_REQUEST
-                        ));
+                invoiceRepository
+                        .findById(invoiceId)
+                        .orElseThrow(() ->
+                                new ApiException(
+                                        INVOICE_NOT_FOUND,
+                                        HttpStatus.BAD_REQUEST
+                                )
+                        );
 
-        if (!invoice.getUserId().equals(loggedInUser.getId())) {
+        if (!invoice.getUserId()
+                .equals(loggedInUser.getId())) {
+
             throw new ApiException(
                     INVOICE_NOT_FOUND,
                     HttpStatus.BAD_REQUEST
@@ -1097,14 +1236,19 @@ public class InvoiceService {
             UserSession userSession,
             User loggedInUser) {
 
-        if (userSession == null || loggedInUser == null) {
+        if (userSession == null
+                || loggedInUser == null) {
+
             throw new ApiException(
                     INVALID_SESSION,
                     HttpStatus.BAD_REQUEST
             );
         }
 
-        if (!ROLE_ADMIN.equals(loggedInUser.getRole())) {
+        if (!ROLE_ADMIN.equals(
+                loggedInUser.getRole()
+        )) {
+
             throw new ApiException(
                     HttpStatus.UNAUTHORIZED.toString(),
                     HttpStatus.BAD_REQUEST
@@ -1116,15 +1260,21 @@ public class InvoiceService {
             UserSession userSession,
             User loggedInUser) {
 
-        if (userSession == null || loggedInUser == null) {
+        if (userSession == null
+                || loggedInUser == null) {
+
             throw new ApiException(
                     INVALID_SESSION,
                     HttpStatus.BAD_REQUEST
             );
         }
 
-        if (!ROLE_ADMIN.equals(loggedInUser.getRole())
-                && !ROLE_USER.equals(loggedInUser.getRole())) {
+        if (!ROLE_ADMIN.equals(
+                loggedInUser.getRole()
+        )
+                && !ROLE_USER.equals(
+                loggedInUser.getRole()
+        )) {
 
             throw new ApiException(
                     HttpStatus.UNAUTHORIZED.toString(),
@@ -1160,8 +1310,8 @@ public class InvoiceService {
 
     private record InvoiceItemCalculation(
             UUID billingPlanId,
-            Instant segmentStart,
-            Instant segmentEnd,
+            LocalDate segmentStart,
+            LocalDate segmentEnd,
             BigDecimal openingReading,
             BigDecimal closingReading,
             BigDecimal consumption,
@@ -1173,6 +1323,7 @@ public class InvoiceService {
             String reason) {
 
         static InvoiceGenerationAttempt generated() {
+
             return new InvoiceGenerationAttempt(
                     true,
                     null

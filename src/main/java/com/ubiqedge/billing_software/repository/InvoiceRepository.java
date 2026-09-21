@@ -4,7 +4,6 @@ import com.ubiqedge.billing_software.entity.Invoice;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,15 +16,7 @@ public interface InvoiceRepository
             LocalDate billingPeriodEnd
     );
 
-    List<Invoice>
-    findByUserIdAndBillingPeriodStartGreaterThanEqualAndBillingPeriodEndLessThanEqualOrderByBillingPeriodStartDesc(
-            UUID userId,
-            LocalDate from,
-            LocalDate to
-    );
-
-    Optional<Invoice>
-    findByAssignmentIdAndBillingPeriodStartAndBillingPeriodEnd(
+    Optional<Invoice> findByAssignmentIdAndBillingPeriodStartAndBillingPeriodEnd(
             UUID assignmentId,
             LocalDate billingPeriodStart,
             LocalDate billingPeriodEnd

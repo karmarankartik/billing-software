@@ -1,0 +1,84 @@
+-- ============================================================
+-- SEED 700 DAYS OF TOTAL METER READINGS
+-- Change ONLY METER_ID below
+-- ============================================================
+
+SET @METER_ID = 'ffa32711-56e9-405a-987f-233b122153c5';
+
+INSERT INTO water_meter_readings (
+    water_meter_id,
+    reading_type,
+    reading_value,
+    reading_at,
+    ingestion_key,
+    created_at
+)
+WITH RECURSIVE days(day_number, reading_date) AS (
+    SELECT
+        0,
+        DATE '2025-01-01'
+
+    UNION ALL
+
+    SELECT
+        day_number + 1,
+        DATEADD('DAY', 1, reading_date)
+    FROM days
+    WHERE day_number < 699
+)
+
+-- Daily TOTAL reading
+SELECT
+    CAST(@METER_ID AS UUID),
+    'TOTAL',
+    1000.000000 + day_number,
+    CAST(reading_date AS TIMESTAMP WITH TIME ZONE),
+    'SEED-' || @METER_ID || '-DAY-' || day_number,
+    CURRENT_TIMESTAMP
+FROM days
+
+UNION ALL
+
+-- Additional reading at 18:00 on every 7th day
+SELECT
+    CAST(@METER_ID AS UUID),
+    'TOTAL',
+    1000.500000 + day_number,
+    CAST(reading_date AS TIMESTAMP WITH TIME ZONE)
+        + INTERVAL '18' HOUR,
+    'SEED-' || @METER_ID || '-DAY-' || day_number || '-LATE',
+    CURRENT_TIMESTAMP
+FROM days
+WHERE MOD(day_number + 1, 7) = 0;
+
+
+get all users meters (active)
+
+SELECT
+    wma.id AS assignment_id,
+    wma.water_meter_id,
+    wma.user_id,
+    wma.assigned_at,
+    wma.unassigned_at
+FROM water_meter_assignments wma
+JOIN water_meters wm
+    ON wm.id = wma.water_meter_id
+WHERE wma.user_id = '802ec675-ab6b-416a-913d-664c3e37f9f6'
+  AND wm.deleted_at IS NULL
+  AND wma.unassigned_at IS NULL
+ORDER BY wma.assigned_at;
+
+get historical meters as well
+
+SELECT
+    wma.id AS assignment_id,
+    wma.water_meter_id,
+    wma.user_id,
+    wma.assigned_at,
+    wma.unassigned_at
+FROM water_meter_assignments wma
+JOIN water_meters wm
+    ON wm.id = wma.water_meter_id
+WHERE wma.user_id = 'YOUR_USER_ID'
+  AND wm.deleted_at IS NULL
+ORDER BY wma.assigned_at;

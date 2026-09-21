@@ -5,6 +5,8 @@ import org.hibernate.generator.EventType;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -22,10 +24,10 @@ public class InvoiceItem {
     private UUID billingPlanId;
 
     @Column(name = "segment_start", nullable = false)
-    private Instant segmentStart;
+    private LocalDate segmentStart;
 
     @Column(name = "segment_end", nullable = false)
-    private Instant segmentEnd;
+    private LocalDate segmentEnd;
 
     @Column(name = "opening_reading", nullable = false, precision = 19, scale = 6)
     private BigDecimal openingReading;
@@ -61,12 +63,8 @@ public class InvoiceItem {
         this.invoiceId = invoiceId;
     }
 
-    public Instant getSegmentStart() {
+    public LocalDate getSegmentStart() {
         return segmentStart;
-    }
-
-    public void setSegmentStart(Instant segmentStart) {
-        this.segmentStart = segmentStart;
     }
 
     public UUID getBillingPlanId() {
@@ -85,11 +83,15 @@ public class InvoiceItem {
         this.openingReading = openingReading;
     }
 
-    public Instant getSegmentEnd() {
+    public void setSegmentStart(LocalDate segmentStart) {
+        this.segmentStart = segmentStart;
+    }
+
+    public LocalDate getSegmentEnd() {
         return segmentEnd;
     }
 
-    public void setSegmentEnd(Instant segmentEnd) {
+    public void setSegmentEnd(LocalDate segmentEnd) {
         this.segmentEnd = segmentEnd;
     }
 
