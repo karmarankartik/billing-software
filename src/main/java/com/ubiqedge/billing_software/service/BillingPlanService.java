@@ -553,7 +553,7 @@ public class BillingPlanService {
             Instant now) {
 
         OffsetDateTime timestamp =
-                now.atOffset(ZoneOffset.UTC);
+                now.atOffset((ZoneOffset) BILLING_ZONE);
 
         for (BillingSlabRequest request : slabs) {
 
@@ -583,7 +583,7 @@ public class BillingPlanService {
             Instant now) {
 
         OffsetDateTime timestamp =
-                now.atOffset(ZoneOffset.UTC);
+                now.atOffset((ZoneOffset) BILLING_ZONE);
 
         List<BillingPlanSlab> slabs =
                 billingPlanSlabRepository
