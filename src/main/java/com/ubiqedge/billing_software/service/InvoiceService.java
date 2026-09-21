@@ -37,7 +37,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -166,12 +165,12 @@ public class InvoiceService {
         try {
 
             Instant periodStart =
-                    from.atStartOfDay(ZoneOffset.UTC)
+                    from.atStartOfDay(BILLING_ZONE)
                             .toInstant();
 
             Instant periodEnd =
                     to.plusDays(1)
-                            .atStartOfDay(ZoneOffset.UTC)
+                            .atStartOfDay(BILLING_ZONE)
                             .toInstant();
 
             List<WaterMeterAssignment> assignments =
@@ -379,12 +378,12 @@ public class InvoiceService {
         validateBillingPeriod(from, to);
 
         Instant periodStart =
-                from.atStartOfDay(ZoneOffset.UTC)
+                from.atStartOfDay(BILLING_ZONE)
                         .toInstant();
 
         Instant periodEnd =
                 to.plusDays(1)
-                        .atStartOfDay(ZoneOffset.UTC)
+                        .atStartOfDay(BILLING_ZONE)
                         .toInstant();
 
         List<WaterMeterAssignment> assignments =
@@ -427,12 +426,12 @@ public class InvoiceService {
         validateBillingPeriod(from, to);
 
         Instant periodStart =
-                from.atStartOfDay(ZoneOffset.UTC)
+                from.atStartOfDay(BILLING_ZONE)
                         .toInstant();
 
         Instant periodEnd =
                 to.plusDays(1)
-                        .atStartOfDay(ZoneOffset.UTC)
+                        .atStartOfDay(BILLING_ZONE)
                         .toInstant();
 
         List<WaterMeterAssignment> assignments =
@@ -884,14 +883,14 @@ public class InvoiceService {
          */
         LocalDate assignmentStart =
                 assignment.getAssignedAt()
-                        .atZone(ZoneOffset.UTC)
+                        .atZone(BILLING_ZONE)
                         .toLocalDate();
 
         LocalDate assignmentEnd =
                 assignment.getUnassignedAt() == null
                         ? null
                         : assignment.getUnassignedAt()
-                          .atZone(ZoneOffset.UTC)
+                          .atZone(BILLING_ZONE)
                           .toLocalDate();
 
         LocalDate calculationFrom =
@@ -1131,7 +1130,7 @@ public class InvoiceService {
         mappings.stream()
                 .map(mapping ->
                         mapping.getEffectiveFrom()
-                                .atZone(ZoneOffset.UTC)
+                                .atZone(BILLING_ZONE)
                                 .toLocalDate()
                 )
                 .filter(date -> date.isAfter(from))
@@ -1190,7 +1189,7 @@ public class InvoiceService {
 
                     LocalDate effectiveFrom =
                             mapping.getEffectiveFrom()
-                                    .atZone(ZoneOffset.UTC)
+                                    .atZone(BILLING_ZONE)
                                     .toLocalDate();
 
                     if (effectiveFrom.isAfter(date)) {
@@ -1203,7 +1202,7 @@ public class InvoiceService {
 
                     LocalDate effectiveTo =
                             mapping.getEffectiveTo()
-                                    .atZone(ZoneOffset.UTC)
+                                    .atZone(BILLING_ZONE)
                                     .toLocalDate();
 
                     return date.isBefore(effectiveTo);
@@ -1342,12 +1341,12 @@ public class InvoiceService {
             LocalDate date) {
 
         Instant dayStart =
-                date.atStartOfDay(ZoneOffset.UTC)
+                date.atStartOfDay(BILLING_ZONE)
                         .toInstant();
 
         Instant nextDayStart =
                 date.plusDays(1)
-                        .atStartOfDay(ZoneOffset.UTC)
+                        .atStartOfDay(BILLING_ZONE)
                         .toInstant();
 
         return waterMeterReadingRepository

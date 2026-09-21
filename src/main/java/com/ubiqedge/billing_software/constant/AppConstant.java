@@ -3,6 +3,7 @@ package com.ubiqedge.billing_software.constant;
 import org.springframework.data.mapping.model.FieldNamingStrategy;
 
 import java.lang.reflect.Field;
+import java.time.ZoneId;
 
 public class AppConstant {
 
@@ -116,5 +117,7 @@ public class AppConstant {
     public static final String RUNNING = "RUNNING";
     public static final String COMPLETED = "COMPLETED";
     public static final String FAILED = "FAILED";
+
+    public static final ZoneId BILLING_ZONE = ZoneId.of("Asia/Kolkata");
 
 }

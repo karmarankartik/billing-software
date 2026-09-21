@@ -5,6 +5,7 @@ import com.ubiqedge.billing_software.entity.Invoice;
 import com.ubiqedge.billing_software.entity.InvoiceItem;
 import com.ubiqedge.billing_software.entity.User;
 import com.ubiqedge.billing_software.entity.UserSession;
+import com.ubiqedge.billing_software.exception.ApiException;
 import com.ubiqedge.billing_software.service.InvoiceService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -12,9 +13,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
+import static com.ubiqedge.billing_software.constant.AppConstant.INVALID_BILLING_PERIOD;
 import static com.ubiqedge.billing_software.constant.AppConstant.INVOICES_GENERATED_SUCCESSFULLY;
 
 @RestController
@@ -43,6 +46,8 @@ public class InvoiceController {
             @Valid
             @RequestBody
             GenerateInvoiceRequest request) {
+
+
 
         InvoiceGenerationResponse response =
                 invoiceService.startInvoiceGeneration(
@@ -116,6 +121,8 @@ public class InvoiceController {
             @RequestParam
             LocalDate to) {
 
+
+
         List<Invoice> invoices =
                 invoiceService.getInvoicesForUser(
                         userSession,
@@ -151,6 +158,9 @@ public class InvoiceController {
             @Valid
             @RequestBody
             GenerateInvoiceRequest request) {
+
+        if (!request.billingPeriodStart().isBefore(request.billingPeriodEnd()) || ChronoUnit.DAYS.between(request.billingPeriodStart(), request.billingPeriodEnd()) > 45)
+            throw new ApiException(INVALID_BILLING_PERIOD, HttpStatus.BAD_REQUEST);
 
         UserInvoiceGenerationResponse response =
                 invoiceService.generateInvoicesForUser(
