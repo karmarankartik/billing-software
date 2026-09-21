@@ -1,0 +1,491 @@
+WATER BILLING SYSTEM
+3-DEVELOPER WATERFALL PROJECT PLAN
+==================================
+
+## PROJECT METHODOLOGY
+
+Waterfall
+
+Project flow:
+
+Requirements
+|
+v
+System Design
+|
+v
+Database & Architecture
+|
+v
+Development
+|
+v
+Integration
+|
+v
+Testing
+|
+v
+Release
+
+## TEAM
+
+Developer 1
+Primary Area:
+
+* Authentication
+* User Management
+* Meter Readings
+* Invoice Management
+
+Developer 2
+Primary Area:
+
+* Water Meter Management
+* Meter Assignment
+* Assignment History
+* Meter/Billing Plan Association
+
+Developer 3
+Primary Area:
+
+* Billing Plan Management
+* Slab Management
+* Billing Calculation
+* Batch Billing
+
+============================================================
+PHASE 1 — REQUIREMENTS
+======================
+
+All 3 Developers
+
+Activities:
+
+* Understand business requirements
+* Identify functional requirements
+* Identify validation rules
+* Identify billing scenarios
+* Identify historical-data requirements
+* Identify batch billing requirements
+* Finalize API requirements
+
+Deliverable:
+
+* Approved Requirements
+
+============================================================
+PHASE 2 — SYSTEM DESIGN
+=======================
+
+All 3 Developers
+
+Developer 1:
+
+* Authentication flow
+* User APIs
+* Invoice APIs
+
+Developer 2:
+
+* Water meter lifecycle
+* Assignment lifecycle
+* Meter history
+
+Developer 3:
+
+* Billing plan structure
+* Slab calculation design
+* Billing calculation flow
+* Batch billing design
+
+Common:
+
+* API contracts
+* Exception handling strategy
+* Validation strategy
+* Database ERD
+* Overall architecture
+
+Deliverable:
+
+* Approved System Design
+* Approved ER Diagram
+* Approved API Contracts
+
+============================================================
+PHASE 3 — DATABASE & PROJECT FOUNDATION
+=======================================
+
+All 3 Developers
+
+Activities:
+
+* Spring Boot project setup
+* Maven configuration
+* H2 database
+* Flyway migrations
+* Common constants
+* Exception handling
+* Common response structures
+* Entity/repository structure
+
+Database Modules:
+
+Developer 1:
+
+* users
+* user_sessions
+* invoices
+* invoice_items
+
+Developer 2:
+
+* water_meters
+* water_meter_assignments
+* water_meter_billing_plans
+* water_meter_readings
+
+Developer 3:
+
+* billing_plans
+* billing_plan_slabs
+* billing_generation_jobs
+* billing_generation_job_skips
+
+Deliverable:
+
+* Working project foundation
+* Database schema
+* Initial Flyway migration
+
+============================================================
+PHASE 4 — CORE DEVELOPMENT
+==========================
+
+All 3 Developers work in parallel.
+
+---
+
+## DEVELOPER 1
+
+Authentication
+
+* Login
+* Logout
+* Session management
+* Authentication interceptor
+
+User Management
+
+* User CRUD
+* User validation
+* Role handling
+
+---
+
+## DEVELOPER 2
+
+Water Meter Management
+
+* Create meter
+* Update meter
+* Delete meter
+* Meter retrieval
+
+Meter Assignment
+
+* Assign meter
+* Unassign meter
+* Assignment history
+* Active assignment validation
+
+---
+
+## DEVELOPER 3
+
+Billing Plan Management
+
+* Create billing plan
+* Update billing plan
+* Delete/deactivate plan
+* Fixed plans
+* Slab plans
+
+Billing Plan Association
+
+* Assign plan to meter
+* Change plan
+* Plan history
+
+Deliverable:
+
+* Core modules completed
+
+============================================================
+PHASE 5 — BILLING DEVELOPMENT
+=============================
+
+---
+
+## DEVELOPER 1 — METER READINGS
+
+* Reading ingestion
+* Reading validation
+* TOTAL readings
+* FLOW readings
+* Idempotent ingestion
+* Reading retrieval
+* Date-range validation
+
+---
+
+## DEVELOPER 2 — CONSUMPTION
+
+* Opening reading
+* Closing reading
+* Consumption calculation
+* Reading availability validation
+* Billing-period validation
+* Meter assignment validation
+
+---
+
+## DEVELOPER 3 — BILLING CALCULATION
+
+* Fixed billing calculation
+* Slab billing calculation
+* Billing-plan history
+* Plan change detection
+* Split billing period
+* Segment calculation
+* Amount calculation
+
+Deliverable:
+
+* Complete billing calculation flow
+
+============================================================
+PHASE 6 — INVOICE & BATCH BILLING
+=================================
+
+---
+
+## DEVELOPER 1 — INVOICES
+
+* Invoice generation
+* Invoice persistence
+* Invoice retrieval
+* Invoice history
+* Invoice items
+
+---
+
+## DEVELOPER 2 — INVOICE VALIDATION
+
+* Assignment validation
+* Billing period validation
+* Historical assignment handling
+* Invoice consistency checks
+
+---
+
+## DEVELOPER 3 — BATCH BILLING
+
+* Billing generation job
+* Process multiple meters
+* Track processed meters
+* Track generated invoices
+* Handle skipped meters
+* Store skip reasons
+* Job status management
+
+Deliverable:
+
+* Complete individual and batch billing
+
+============================================================
+PHASE 7 — INTEGRATION
+=====================
+
+All 3 Developers
+
+Integration flow:
+
+User
+|
+v
+Water Meter
+|
+v
+Meter Assignment
+|
+v
+Billing Plan
+|
+v
+Meter Readings
+|
+v
+Consumption
+|
+v
+Billing Calculation
+|
+v
+Invoice
+|
+v
+Batch Billing
+
+Activities:
+
+* Merge all modules
+* Resolve integration issues
+* Validate API contracts
+* Validate database relationships
+* End-to-end billing flow
+
+Deliverable:
+
+* Integrated application
+
+============================================================
+PHASE 8 — TESTING
+=================
+
+All 3 Developers
+
+Developer 1:
+
+* Authentication tests
+* User tests
+* Invoice tests
+
+Developer 2:
+
+* Meter tests
+* Assignment tests
+* Reading tests
+
+Developer 3:
+
+* Billing plan tests
+* Billing calculation tests
+* Batch billing tests
+
+Common testing:
+
+* Integration testing
+* End-to-end testing
+* Validation testing
+* Error handling
+* Boundary conditions
+* Historical-data scenarios
+* Duplicate reading scenarios
+* Billing-plan change scenarios
+* Multiple meter scenarios
+
+Deliverable:
+
+* Tested application
+* Defect-free release candidate
+
+============================================================
+PHASE 9 — DOCUMENTATION & RELEASE
+=================================
+
+All 3 Developers
+
+Activities:
+
+* API documentation
+* README
+* Database documentation
+* ER diagram
+* Deployment instructions
+* Configuration documentation
+* Final code review
+* Final Git cleanup
+
+Deliverable:
+
+* Production-ready release
+
+============================================================
+HIGH-LEVEL RESPONSIBILITY MATRIX
+================================
+
+## Module                         Dev 1       Dev 2       Dev 3
+
+Authentication                  PRIMARY
+Users                           PRIMARY
+Water Meters                                PRIMARY
+Assignments                                PRIMARY
+Billing Plans                                            PRIMARY
+Plan Slabs                                               PRIMARY
+Meter Readings                   PRIMARY
+Consumption                                 PRIMARY
+Billing Calculation                                      PRIMARY
+Invoices                        PRIMARY
+Invoice Items                   PRIMARY
+Batch Billing                                             PRIMARY
+Integration                     COMMON      COMMON      COMMON
+Testing                         COMMON      COMMON      COMMON
+Documentation                  COMMON      COMMON      COMMON
+
+============================================================
+PROJECT MILESTONES
+==================
+
+M1  Requirements Approved
+|
+v
+M2  System Design & ERD Approved
+|
+v
+M3  Database & Project Foundation Complete
+|
+v
+M4  Core Modules Complete
+|
+v
+M5  Billing Engine Complete
+|
+v
+M6  Invoice & Batch Billing Complete
+|
+v
+M7  Integration Complete
+|
+v
+M8  Testing Complete
+|
+v
+M9  Final Release
+
+============================================================
+WATERFALL CONTROL POINTS
+========================
+
+Each phase must be reviewed and completed before
+the next phase begins.
+
+Requirements
+|
+| Approval
+v
+Design
+|
+| Approval
+v
+Development
+|
+| Integration
+v
+Testing
+|
+| Sign-off
+v
+Release
+=======
