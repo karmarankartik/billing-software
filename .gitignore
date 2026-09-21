@@ -1,33 +1,84 @@
-HELP.md
+# ============================================================
+# BILLING SOFTWARE - STRICT ALLOWLIST
+#
+# Only the following are allowed to be tracked:
+#   .gitignore
+#   README.md
+#   pom.xml
+#   src/**
+# ============================================================
+
+# Ignore everything
+*
+
+# ============================================================
+# ALLOW REQUIRED FILES
+# ============================================================
+
+# Git ignore itself
+!.gitignore
+
+# README
+!README.md
+
+# Maven POM
+!pom.xml
+
+# Source, resources and tests
+!src/
+!src/**
+
+# ============================================================
+# EXPLICITLY IGNORE GENERATED / BUILD CONTENT
+# ============================================================
+
+src/**/target/
+src/**/build/
+
 target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+build/
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# ============================================================
+# IDE FILES
+# ============================================================
 
-### IntelliJ IDEA ###
-.idea
-*.iws
+.idea/
+.vscode/
 *.iml
+*.iws
 *.ipr
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+.classpath
+.project
+.settings/
+.factorypath
+.springBeans
+.sts4-cache
+.apt_generated
 
-### VS Code ###
-.vscode/
+# ============================================================
+# MAVEN / BUILD TOOL GENERATED FILES
+# ============================================================
+
+.mvn/
+.gradle/
+nbbuild/
+nbdist/
+dist/
+.nb-gradle/
+
+# ============================================================
+# OS FILES
+# ============================================================
+
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ============================================================
+# LOGS / TEMPORARY FILES
+# ============================================================
+
+*.log
+*.tmp
+*.temp
