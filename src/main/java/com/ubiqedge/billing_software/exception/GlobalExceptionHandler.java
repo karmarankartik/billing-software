@@ -1,6 +1,8 @@
 package com.ubiqedge.billing_software.exception;
 
 import com.ubiqedge.billing_software.dto.ApiResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,9 +14,19 @@ import static com.ubiqedge.billing_software.constant.AppConstant.*;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ApiResponse> handleApiException(
             ApiException exception) {
+
+        LOGGER.error(
+                "Application exception occurred. status={}, message={}",
+                exception.getStatus(),
+                exception.getMessage(),
+                exception
+        );
 
         return ResponseEntity
                 .status(exception.getStatus())

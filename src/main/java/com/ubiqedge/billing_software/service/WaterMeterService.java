@@ -160,7 +160,6 @@ public class WaterMeterService {
                 .map(this::toResponse)
                 .toList();
     }
-
     @Transactional
     public WaterMeterResponse update(
             UserSession userSession,
@@ -190,7 +189,7 @@ public class WaterMeterService {
 
         /*
          * If a billing plan is supplied during update,
-         * validate it before modifying anything.
+         * validate that it exists, is active and is not deleted.
          */
         if (request.billingPlanId() != null
                 && !billingPlanRepository
@@ -205,6 +204,18 @@ public class WaterMeterService {
 
         Instant now = Instant.now();
 
+        /*
+         * Find the currently active billing-plan mapping before
+         * making any changes.
+         */
+        WaterMeterBillingPlan existingMapping =
+                waterMeterBillingPlanRepository
+                        .findByWaterMeterIdAndEffectiveToIsNull(id)
+                        .orElse(null);
+
+        /*
+         * Update the meter itself.
+         */
         waterMeter.setMeterNumber(request.meterNumber());
         waterMeter.setUpdatedBy(loggedInUser.getId());
         waterMeter.setUpdatedAt(now);
@@ -213,44 +224,66 @@ public class WaterMeterService {
                 waterMeterRepository.save(waterMeter);
 
         /*
-         * If billingPlanId is supplied:
+         * A null billingPlanId means:
          *
-         * 1. Close the current active mapping.
-         * 2. Create a new active mapping.
-         *
-         * If billingPlanId is null:
-         * Leave the existing billing-plan mapping unchanged.
+         * "Do not change the existing billing-plan assignment."
          */
-        if (request.billingPlanId() != null) {
-
-            waterMeterBillingPlanRepository
-                    .findByWaterMeterIdAndEffectiveToIsNull(id)
-                    .ifPresent(existingMapping -> {
-
-                        existingMapping.setEffectiveTo(now);
-                        existingMapping.setActivePlanKey(null);
-
-                        waterMeterBillingPlanRepository.save(
-                                existingMapping
-                        );
-                    });
-
-            WaterMeterBillingPlan newMapping =
-                    new WaterMeterBillingPlan();
-
-            newMapping.setWaterMeterId(id);
-            newMapping.setBillingPlanId(request.billingPlanId());
-            newMapping.setEffectiveFrom(now);
-            newMapping.setEffectiveTo(null);
-            newMapping.setActivePlanKey(id);
-            newMapping.setCreatedBy(loggedInUser.getId());
-            newMapping.setCreatedAt(now);
-
-            waterMeterBillingPlanRepository.save(newMapping);
+        if (request.billingPlanId() == null) {
+            return toResponse(updatedWaterMeter);
         }
+
+        /*
+         * If the requested billing plan is already the active plan,
+         * there is no history change required.
+         *
+         * This prevents creating unnecessary duplicate active mappings.
+         */
+        if (existingMapping != null
+                && existingMapping.getBillingPlanId()
+                .equals(request.billingPlanId())) {
+
+            return toResponse(updatedWaterMeter);
+        }
+
+        /*
+         * The billing plan has actually changed.
+         *
+         * First close the existing active mapping.
+         */
+        if (existingMapping != null) {
+
+            existingMapping.setEffectiveTo(now);
+            existingMapping.setActivePlanKey(null);
+
+            waterMeterBillingPlanRepository.saveAndFlush(
+                    existingMapping
+            );
+        }
+
+        /*
+         * Create the new active billing-plan mapping.
+         */
+        WaterMeterBillingPlan newMapping =
+                new WaterMeterBillingPlan();
+
+        newMapping.setWaterMeterId(id);
+        newMapping.setBillingPlanId(request.billingPlanId());
+        newMapping.setEffectiveFrom(now);
+        newMapping.setEffectiveTo(null);
+        newMapping.setActivePlanKey(id);
+        newMapping.setCreatedBy(loggedInUser.getId());
+        newMapping.setCreatedAt(now);
+
+        waterMeterBillingPlanRepository.save(newMapping);
 
         return toResponse(updatedWaterMeter);
     }
+
+
+
+
+
+
 
     @Transactional
     public void delete(

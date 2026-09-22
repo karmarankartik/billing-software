@@ -552,8 +552,7 @@ public class BillingPlanService {
             List<BillingSlabRequest> slabs,
             Instant now) {
 
-        OffsetDateTime timestamp =
-                now.atOffset((ZoneOffset) BILLING_ZONE);
+        Instant timestamp = now;
 
         for (BillingSlabRequest request : slabs) {
 
@@ -564,8 +563,8 @@ public class BillingPlanService {
             slab.setLowerBound(request.lowerBound());
             slab.setUpperBound(request.upperBound());
             slab.setPricePerUnit(request.pricePerUnit());
-            slab.setCreatedAt(timestamp.toInstant());
-            slab.setUpdatedAt(timestamp.toInstant());
+            slab.setCreatedAt(timestamp);
+            slab.setUpdatedAt(timestamp);
             slab.setDeletedAt(null);
 
             billingPlanSlabRepository.save(slab);
@@ -582,8 +581,7 @@ public class BillingPlanService {
             UUID billingPlanId,
             Instant now) {
 
-        OffsetDateTime timestamp =
-                now.atOffset((ZoneOffset) BILLING_ZONE);
+        Instant timestamp = now;
 
         List<BillingPlanSlab> slabs =
                 billingPlanSlabRepository
@@ -593,8 +591,8 @@ public class BillingPlanService {
 
         for (BillingPlanSlab slab : slabs) {
 
-            slab.setDeletedAt(timestamp.toInstant());
-            slab.setUpdatedAt(timestamp.toInstant());
+            slab.setDeletedAt(timestamp);
+            slab.setUpdatedAt(timestamp);
         }
 
         if (!slabs.isEmpty()) {
