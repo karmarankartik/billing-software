@@ -5,7 +5,6 @@ import java.util.UUID;
 
 public record UpdateWaterMeterRequest(
         String meterNumber,
-        UUID billingPlanId,
-        BigDecimal currentTotalReading
+        UUID billingPlanId
 ) {
 }
