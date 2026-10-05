@@ -1,4 +1,4 @@
-```sql
+
 -- ============================================================
 -- WATER BILLING SYSTEM
 -- Database: PostgreSQL
@@ -601,4 +601,4 @@ CREATE UNIQUE INDEX IF NOT EXISTS uk_invoices_assignment_period
 -- ============================================================
 -- END OF SCHEMA
 -- ============================================================
-```
+
