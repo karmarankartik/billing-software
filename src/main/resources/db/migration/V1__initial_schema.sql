@@ -9,6 +9,8 @@
 -- USERS
 -- ============================================================
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE TABLE IF NOT EXISTS users (
                                      id UUID DEFAULT RANDOM_UUID() PRIMARY KEY,
 
