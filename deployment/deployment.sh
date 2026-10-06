@@ -16,7 +16,7 @@ echo "Commit: $SHA"
 echo "=========================================="
 
 COMPOSE_FILE="/tmp/billing-deployment/docker-compose.yml"
-ENV_FILE="/run/billing-secrets.env"
+ENV_FILE="/tmp/billing-secrets.env"
 
 # Pull the exact image built by CI for this commit
 docker pull "ghcr.io/karmarankartik/billing-software:${SHA}"
