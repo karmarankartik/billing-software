@@ -40,7 +40,7 @@ echo "Checking application health..."
 
 for ATTEMPT in {1..12}; do
 
-    echo "Health check $ATTEMPT/3..."
+    echo "Health check $ATTEMPT/12..."
 
     if curl --fail --silent --show-error \
         --max-time 5 \
@@ -56,7 +56,7 @@ for ATTEMPT in {1..12}; do
 
     echo "Health check failed."
 
-    if [[ "$ATTEMPT" -lt 3 ]]; then
+    if [[ "$ATTEMPT" -lt 12 ]]; then
         sleep 5
     fi
 
@@ -66,6 +66,6 @@ echo ""
 echo "=========================================="
 echo "DEPLOYMENT FAILED"
 echo "=========================================="
-echo "Application failed all 3 health checks."
+echo "Application failed all 12 health checks."
 
 exit 1
