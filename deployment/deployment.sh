@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 set -e
@@ -23,6 +22,7 @@ docker pull "ghcr.io/karmarankartik/billing-software:${SHA}"
 
 # Stop and remove the current stack.
 # No -v: PostgreSQL volume is preserved.
+IMAGE_TAG="$SHA" \
 docker compose \
     --env-file "$ENV_FILE" \
     -f "$COMPOSE_FILE" \
