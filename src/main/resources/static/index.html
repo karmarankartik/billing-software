@@ -14,6 +14,7 @@
 <!-- =========================================================
      LOGIN
      ========================================================= -->
+
 <section id="login-view" class="auth-view">
 
     <div class="auth-card">
@@ -76,6 +77,7 @@
 <!-- =========================================================
      APPLICATION
      ========================================================= -->
+
 <div id="app-view" class="app-shell hidden">
 
     <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
@@ -84,6 +86,7 @@
     <!-- =====================================================
          SIDEBAR
          ===================================================== -->
+
     <aside id="sidebar" class="sidebar">
 
         <div class="sidebar-top">
@@ -304,6 +307,7 @@
     <!-- =====================================================
          MAIN CONTENT
          ===================================================== -->
+
     <main class="main-content">
 
         <!-- ================= TOP BAR ================= -->
@@ -333,7 +337,6 @@
                 </div>
 
             </div>
-
 
             <div class="topbar-actions">
 
@@ -504,12 +507,8 @@
                             <tbody id="customer-overview-meters">
 
                             <tr>
-                                <td
-                                        colspan="3"
-                                        class="empty-state">
-
+                                <td colspan="3" class="empty-state">
                                     Loading...
-
                                 </td>
                             </tr>
 
@@ -562,12 +561,8 @@
                             <tbody id="customer-overview-invoices">
 
                             <tr>
-                                <td
-                                        colspan="3"
-                                        class="empty-state">
-
+                                <td colspan="3" class="empty-state">
                                     Loading...
-
                                 </td>
                             </tr>
 
@@ -595,13 +590,11 @@
             <div class="section-heading">
 
                 <div>
-
                     <h2>My Water Meters</h2>
 
                     <p>
                         View the meters assigned to your account.
                     </p>
-
                 </div>
 
                 <button
@@ -627,19 +620,14 @@
                             <th>Meter Number</th>
                             <th>Billing Plan</th>
                             <th>Assignment</th>
-                            <th>Actions</th>
                         </tr>
                         </thead>
 
                         <tbody id="customer-meters-table">
 
                         <tr>
-                            <td
-                                    colspan="4"
-                                    class="empty-state">
-
+                            <td colspan="3" class="empty-state">
                                 Loading...
-
                             </td>
                         </tr>
 
@@ -665,13 +653,11 @@
             <div class="section-heading">
 
                 <div>
-
                     <h2>My Invoices</h2>
 
                     <p>
-                        View invoices associated with your account.
+                        View invoices generated for your account.
                     </p>
-
                 </div>
 
                 <button
@@ -695,23 +681,20 @@
                         <thead>
                         <tr>
                             <th>Invoice</th>
-                            <th>Period</th>
+                            <th>Customer</th>
                             <th>Meter</th>
+                            <th>Period</th>
                             <th>Amount</th>
                             <th>Status</th>
-                            <th>Details</th>
+                            <th>Action</th>
                         </tr>
                         </thead>
 
                         <tbody id="customer-invoices-table">
 
                         <tr>
-                            <td
-                                    colspan="6"
-                                    class="empty-state">
-
+                            <td colspan="7" class="empty-state">
                                 Loading...
-
                             </td>
                         </tr>
 
@@ -737,34 +720,17 @@
             <div class="section-heading">
 
                 <div>
-
                     <h2>Generate Invoice</h2>
 
                     <p>
-                        Generate billing for a previous calendar month.
+                        Generate an invoice for the previous billing period.
                     </p>
-
                 </div>
 
             </div>
 
 
-            <article class="panel narrow-panel">
-
-                <div class="panel-header">
-
-                    <div>
-
-                        <h3>Previous-month billing</h3>
-
-                        <p>
-                            Select the billing period and submit it.
-                        </p>
-
-                    </div>
-
-                </div>
-
+            <article class="panel">
 
                 <form
                         id="customer-generate-form"
@@ -844,28 +810,22 @@
             <div class="section-heading">
 
                 <div>
-
                     <h2>Account</h2>
 
                     <p>
-                        Your authenticated session information.
+                        Your account information.
                     </p>
-
                 </div>
 
             </div>
 
 
-            <article class="panel narrow-panel">
+            <article class="panel account-panel">
 
-                <div class="account-profile">
+                <div class="account-header">
 
-                    <div
-                            id="account-avatar"
-                            class="avatar avatar-large">
-
+                    <div id="account-avatar" class="avatar avatar-large">
                         U
-
                     </div>
 
                     <div>
@@ -874,9 +834,11 @@
                             User
                         </h3>
 
-                        <p id="account-role">
+                        <span
+                                id="account-role"
+                                class="badge">
                             CUSTOMER
-                        </p>
+                        </span>
 
                     </div>
 
@@ -886,35 +848,13 @@
                 <div class="detail-list">
 
                     <div>
-
                         <span>Username</span>
-
-                        <strong id="account-username-detail">
-                            —
-                        </strong>
-
+                        <strong id="account-username-detail">—</strong>
                     </div>
 
-
                     <div>
-
                         <span>Role</span>
-
-                        <strong id="account-role-detail">
-                            —
-                        </strong>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>Session</span>
-
-                        <strong class="status-text positive">
-                            Authenticated
-                        </strong>
-
+                        <strong id="account-role-detail">—</strong>
                     </div>
 
                 </div>
@@ -949,23 +889,12 @@
             <div class="section-heading">
 
                 <div>
-
                     <h2>Administrator Dashboard</h2>
 
                     <p>
-                        Manage users, meters, plans, billing and monitoring.
+                        Manage customers, meters, billing plans and invoices.
                     </p>
-
                 </div>
-
-                <button
-                        type="button"
-                        class="btn btn-primary"
-                        data-section-target="admin-billing">
-
-                    Run billing
-
-                </button>
 
             </div>
 
@@ -977,7 +906,6 @@
                     <div class="stat-icon">◫</div>
 
                     <div>
-
                         <span class="stat-label">
                             Water meters
                         </span>
@@ -985,7 +913,6 @@
                         <strong id="admin-meter-count">
                             —
                         </strong>
-
                     </div>
 
                 </article>
@@ -996,7 +923,6 @@
                     <div class="stat-icon">◈</div>
 
                     <div>
-
                         <span class="stat-label">
                             Billing plans
                         </span>
@@ -1004,7 +930,6 @@
                         <strong id="admin-plan-count">
                             —
                         </strong>
-
                     </div>
 
                 </article>
@@ -1015,7 +940,6 @@
                     <div class="stat-icon">▤</div>
 
                     <div>
-
                         <span class="stat-label">
                             Invoices
                         </span>
@@ -1023,7 +947,6 @@
                         <strong id="admin-invoice-count">
                             —
                         </strong>
-
                     </div>
 
                 </article>
@@ -1034,7 +957,6 @@
                     <div class="stat-icon">●</div>
 
                     <div>
-
                         <span class="stat-label">
                             System health
                         </span>
@@ -1042,11 +964,8 @@
                         <strong
                                 id="admin-health-status"
                                 class="status-text">
-
                             —
-
                         </strong>
-
                     </div>
 
                 </article>
@@ -1061,13 +980,10 @@
                     <div class="panel-header">
 
                         <div>
-
                             <h3>Water meters</h3>
-
                             <p>
-                                Current meters managed by the system.
+                                Current meter configurations.
                             </p>
-
                         </div>
 
                         <button
@@ -1075,7 +991,7 @@
                                 class="btn btn-ghost btn-sm"
                                 data-section-target="admin-meters">
 
-                            Manage
+                            View all
 
                         </button>
 
@@ -1089,20 +1005,16 @@
                             <thead>
                             <tr>
                                 <th>Meter</th>
-                                <th>Plan</th>
-                                <th>Status</th>
+                                <th>Billing Plan</th>
+                                <th>Assignment</th>
                             </tr>
                             </thead>
 
                             <tbody id="admin-overview-meters">
 
                             <tr>
-                                <td
-                                        colspan="3"
-                                        class="empty-state">
-
+                                <td colspan="3" class="empty-state">
                                     Loading...
-
                                 </td>
                             </tr>
 
@@ -1120,13 +1032,10 @@
                     <div class="panel-header">
 
                         <div>
-
                             <h3>Billing plans</h3>
-
                             <p>
-                                Fixed and slab pricing configurations.
+                                Current pricing configurations.
                             </p>
-
                         </div>
 
                         <button
@@ -1134,7 +1043,7 @@
                                 class="btn btn-ghost btn-sm"
                                 data-section-target="admin-plans">
 
-                            Manage
+                            View all
 
                         </button>
 
@@ -1156,12 +1065,8 @@
                             <tbody id="admin-overview-plans">
 
                             <tr>
-                                <td
-                                        colspan="3"
-                                        class="empty-state">
-
+                                <td colspan="3" class="empty-state">
                                     Loading...
-
                                 </td>
                             </tr>
 
@@ -1181,82 +1086,50 @@
                 <div class="panel-header">
 
                     <div>
-
-                        <h3>Quick actions</h3>
-
+                        <h3>Recent invoices</h3>
                         <p>
-                            Common administration operations.
+                            Latest generated invoices.
                         </p>
-
                     </div>
+
+                    <button
+                            type="button"
+                            class="btn btn-ghost btn-sm"
+                            data-section-target="admin-invoices">
+
+                        View all
+
+                    </button>
 
                 </div>
 
 
-                <div class="quick-actions">
+                <div class="table-wrap">
 
-                    <button
-                            type="button"
-                            class="quick-action"
-                            data-section-target="admin-users">
+                    <table>
 
-                        <span>♙</span>
+                        <thead>
+                        <tr>
+                            <th>Invoice</th>
+                            <th>Customer</th>
+                            <th>Meter</th>
+                            <th>Period</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
 
-                        <strong>User management</strong>
+                        <tbody id="admin-overview-invoices">
 
-                        <small>
-                            Create, lookup, update or delete users.
-                        </small>
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                Loading...
+                            </td>
+                        </tr>
 
-                    </button>
+                        </tbody>
 
-
-                    <button
-                            type="button"
-                            class="quick-action"
-                            data-section-target="admin-meters">
-
-                        <span>◫</span>
-
-                        <strong>Meter management</strong>
-
-                        <small>
-                            Create, update, lookup or delete meters.
-                        </small>
-
-                    </button>
-
-
-                    <button
-                            type="button"
-                            class="quick-action"
-                            data-section-target="admin-assignments">
-
-                        <span>⇄</span>
-
-                        <strong>Assignments</strong>
-
-                        <small>
-                            Assign or unassign meters.
-                        </small>
-
-                    </button>
-
-
-                    <button
-                            type="button"
-                            class="quick-action"
-                            data-section-target="admin-monitoring">
-
-                        <span>◌</span>
-
-                        <strong>System monitoring</strong>
-
-                        <small>
-                            Check health, info and application metrics.
-                        </small>
-
-                    </button>
+                    </table>
 
                 </div>
 
@@ -1276,13 +1149,11 @@
             <div class="section-heading">
 
                 <div>
-
                     <h2>User Management</h2>
 
                     <p>
-                        Create and manage users.
+                        Create and manage application users.
                     </p>
-
                 </div>
 
             </div>
@@ -1290,18 +1161,17 @@
 
             <div class="content-grid two-columns">
 
+                <!-- Create user -->
+
                 <article class="panel">
 
                     <div class="panel-header">
 
                         <div>
-
                             <h3>Create user</h3>
-
                             <p>
-                                Create a CUSTOMER or ADMIN account.
+                                Add a new customer or administrator.
                             </p>
-
                         </div>
 
                     </div>
@@ -1311,7 +1181,7 @@
                             id="admin-create-user-form"
                             class="form-grid">
 
-                        <div class="field full">
+                        <div class="field">
 
                             <label for="create-user-username">
                                 Username
@@ -1365,14 +1235,6 @@
                         <div class="form-actions full">
 
                             <button
-                                    type="reset"
-                                    class="btn btn-secondary">
-
-                                Clear
-
-                            </button>
-
-                            <button
                                     type="submit"
                                     class="btn btn-primary">
 
@@ -1387,18 +1249,17 @@
                 </article>
 
 
+                <!-- User lookup -->
+
                 <article class="panel">
 
                     <div class="panel-header">
 
                         <div>
-
-                            <h3>Lookup user</h3>
-
+                            <h3>User lookup</h3>
                             <p>
-                                Search for a user by username.
+                                Find a user using the backend identifier.
                             </p>
-
                         </div>
 
                     </div>
@@ -1411,13 +1272,13 @@
                         <div class="field">
 
                             <label for="user-lookup-id">
-                                Username
+                                User ID
                             </label>
 
                             <input
                                     id="user-lookup-id"
                                     type="text"
-                                    placeholder="Enter username"
+                                    placeholder="Enter user ID"
                                     required>
 
                         </div>
@@ -1437,7 +1298,7 @@
                             id="user-detail-card"
                             class="detail-card hidden">
 
-                        <div class="detail-card-header">
+                        <div class="panel-header">
 
                             <div>
 
@@ -1451,40 +1312,22 @@
 
                             </div>
 
-                            <span
-                                    id="user-detail-role"
-                                    class="badge">
-
-                                —
-
-                            </span>
-
                         </div>
 
 
-                        <dl class="definition-grid">
+                        <div class="detail-list">
 
                             <div>
-
-                                <dt>Username</dt>
-
-                                <dd id="user-detail-username">
-                                    —
-                                </dd>
-
+                                <span>Username</span>
+                                <strong id="user-detail-username">—</strong>
                             </div>
 
                             <div>
-
-                                <dt>Role</dt>
-
-                                <dd id="user-detail-role-value">
-                                    —
-                                </dd>
-
+                                <span>Role</span>
+                                <strong id="user-detail-role-value">—</strong>
                             </div>
 
-                        </dl>
+                        </div>
 
 
                         <div class="form-actions">
@@ -1525,13 +1368,10 @@
                 <div class="panel-header">
 
                     <div>
-
                         <h3>Edit user</h3>
-
                         <p>
-                            Update the selected user's details.
+                            Update the selected user.
                         </p>
-
                     </div>
 
                     <button
@@ -1572,20 +1412,6 @@
 
                     <div class="field">
 
-                        <label for="edit-user-password">
-                            Password
-                        </label>
-
-                        <input
-                                id="edit-user-password"
-                                type="password"
-                                placeholder="New password">
-
-                    </div>
-
-
-                    <div class="field">
-
                         <label for="edit-user-role">
                             Role
                         </label>
@@ -1603,6 +1429,20 @@
                             </option>
 
                         </select>
+
+                    </div>
+
+
+                    <div class="field full">
+
+                        <label for="edit-user-password">
+                            New password
+                        </label>
+
+                        <input
+                                id="edit-user-password"
+                                type="password"
+                                placeholder="Leave blank to keep current password">
 
                     </div>
 
@@ -1636,7 +1476,7 @@
 
 
         <!-- =================================================
-             ADMIN WATER METERS
+             ADMIN METERS
              ================================================= -->
 
         <section
@@ -1646,13 +1486,11 @@
             <div class="section-heading">
 
                 <div>
-
                     <h2>Water Meters</h2>
 
                     <p>
-                        Manage meters and billing plan associations.
+                        Manage water meters and their billing plans.
                     </p>
-
                 </div>
 
                 <button
@@ -1676,13 +1514,10 @@
                     <div class="panel-header">
 
                         <div>
-
                             <h3>Create meter</h3>
-
                             <p>
-                                Associate the meter with a billing plan.
+                                Add a new water meter.
                             </p>
-
                         </div>
 
                     </div>
@@ -1692,7 +1527,7 @@
                             id="admin-create-meter-form"
                             class="form-grid">
 
-                        <div class="field full">
+                        <div class="field">
 
                             <label for="create-meter-number">
                                 Meter number
@@ -1706,7 +1541,7 @@
                         </div>
 
 
-                        <div class="field full">
+                        <div class="field">
 
                             <label for="create-meter-plan">
                                 Billing plan
@@ -1728,14 +1563,6 @@
                         <div class="form-actions full">
 
                             <button
-                                    type="reset"
-                                    class="btn btn-secondary">
-
-                                Clear
-
-                            </button>
-
-                            <button
                                     type="submit"
                                     class="btn btn-primary">
 
@@ -1750,20 +1577,17 @@
                 </article>
 
 
-                <!-- Lookup meter -->
+                <!-- Meter lookup -->
 
                 <article class="panel">
 
                     <div class="panel-header">
 
                         <div>
-
                             <h3>Meter lookup</h3>
-
                             <p>
-                                Search for a meter by meter number.
+                                Find a meter using its backend identifier.
                             </p>
-
                         </div>
 
                     </div>
@@ -1776,13 +1600,13 @@
                         <div class="field">
 
                             <label for="meter-lookup-id">
-                                Meter number
+                                Meter ID
                             </label>
 
                             <input
                                     id="meter-lookup-id"
                                     type="text"
-                                    placeholder="Enter meter number"
+                                    placeholder="Enter meter ID"
                                     required>
 
                         </div>
@@ -1802,7 +1626,7 @@
                             id="meter-detail-card"
                             class="detail-card hidden">
 
-                        <div class="detail-card-header">
+                        <div class="panel-header">
 
                             <div>
 
@@ -1819,29 +1643,19 @@
                         </div>
 
 
-                        <dl class="definition-grid">
+                        <div class="detail-list">
 
                             <div>
-
-                                <dt>Meter number</dt>
-
-                                <dd id="meter-detail-number">
-                                    —
-                                </dd>
-
+                                <span>Meter number</span>
+                                <strong id="meter-detail-number">—</strong>
                             </div>
 
                             <div>
-
-                                <dt>Billing plan</dt>
-
-                                <dd id="meter-detail-plan">
-                                    —
-                                </dd>
-
+                                <span>Billing plan</span>
+                                <strong id="meter-detail-plan">—</strong>
                             </div>
 
-                        </dl>
+                        </div>
 
 
                         <div class="form-actions">
@@ -1873,20 +1687,17 @@
             </div>
 
 
-            <!-- All meters -->
+            <!-- Meter list -->
 
             <article class="panel">
 
                 <div class="panel-header">
 
                     <div>
-
                         <h3>All water meters</h3>
-
                         <p>
-                            Meters returned by the admin meter-list endpoint.
+                            Current water meter configurations.
                         </p>
-
                     </div>
 
                 </div>
@@ -1909,15 +1720,9 @@
                         <tbody id="admin-meters-table">
 
                         <tr>
-
-                            <td
-                                    colspan="3"
-                                    class="empty-state">
-
+                            <td colspan="3" class="empty-state">
                                 Loading...
-
                             </td>
-
                         </tr>
 
                         </tbody>
@@ -1938,13 +1743,10 @@
                 <div class="panel-header">
 
                     <div>
-
-                        <h3>Edit meter</h3>
-
+                        <h3>Edit water meter</h3>
                         <p>
-                            Update meter details.
+                            Update the selected meter.
                         </p>
-
                     </div>
 
                     <button
@@ -2041,13 +1843,11 @@
             <div class="section-heading">
 
                 <div>
-
                     <h2>Meter Assignments</h2>
 
                     <p>
-                        Assign or unassign water meters from customers.
+                        Assign water meters to customers.
                     </p>
-
                 </div>
 
             </div>
@@ -2055,18 +1855,17 @@
 
             <div class="content-grid two-columns">
 
+                <!-- Assignment -->
+
                 <article class="panel">
 
                     <div class="panel-header">
 
                         <div>
-
                             <h3>Assign meter</h3>
-
                             <p>
-                                Link a meter to a customer.
+                                Associate a water meter with a customer.
                             </p>
-
                         </div>
 
                     </div>
@@ -2074,7 +1873,7 @@
 
                     <form
                             id="admin-assignment-form"
-                            class="form-stack">
+                            class="form-grid">
 
                         <div class="field">
 
@@ -2114,31 +1913,34 @@
                         </div>
 
 
-                        <button
-                                type="submit"
-                                class="btn btn-primary">
+                        <div class="form-actions full">
 
-                            Assign meter
+                            <button
+                                    type="submit"
+                                    class="btn btn-primary">
 
-                        </button>
+                                Assign meter
+
+                            </button>
+
+                        </div>
 
                     </form>
 
                 </article>
 
 
+                <!-- Unassignment -->
+
                 <article class="panel">
 
                     <div class="panel-header">
 
                         <div>
-
-                            <h3>Unassign meter</h3>
-
+                            <h3>Remove assignment</h3>
                             <p>
-                                Remove an existing meter assignment.
+                                Remove an existing customer assignment.
                             </p>
-
                         </div>
 
                     </div>
@@ -2146,7 +1948,7 @@
 
                     <form
                             id="admin-unassignment-form"
-                            class="form-stack">
+                            class="form-grid">
 
                         <div class="field">
 
@@ -2186,13 +1988,17 @@
                         </div>
 
 
-                        <button
-                                type="submit"
-                                class="btn btn-danger">
+                        <div class="form-actions full">
 
-                            Unassign meter
+                            <button
+                                    type="submit"
+                                    class="btn btn-danger">
 
-                        </button>
+                                Remove assignment
+
+                            </button>
+
+                        </div>
 
                     </form>
 
@@ -2214,13 +2020,11 @@
             <div class="section-heading">
 
                 <div>
-
                     <h2>Billing Plans</h2>
 
                     <p>
-                        Manage FIXED and SLAB pricing plans.
+                        Create and manage billing pricing configurations.
                     </p>
-
                 </div>
 
                 <button
@@ -2242,13 +2046,10 @@
                 <div class="panel-header">
 
                     <div>
-
                         <h3>Create billing plan</h3>
-
                         <p>
-                            Configure fixed pricing or slab pricing.
+                            Configure fixed or slab-based pricing.
                         </p>
-
                     </div>
 
                 </div>
@@ -2340,8 +2141,6 @@
                     </div>
 
 
-                    <!-- Slab builder -->
-
                     <div
                             id="slab-builder"
                             class="full hidden">
@@ -2373,7 +2172,6 @@
                         <div
                                 id="slab-rows"
                                 class="slab-list">
-
                         </div>
 
                     </div>
@@ -2411,13 +2209,11 @@
                 <div class="panel-header">
 
                     <div>
-
                         <h3>All billing plans</h3>
 
                         <p>
                             Current pricing configurations.
                         </p>
-
                     </div>
 
                 </div>
@@ -2443,15 +2239,9 @@
                         <tbody id="admin-plans-table">
 
                         <tr>
-
-                            <td
-                                    colspan="6"
-                                    class="empty-state">
-
+                            <td colspan="6" class="empty-state">
                                 Loading...
-
                             </td>
-
                         </tr>
 
                         </tbody>
@@ -2472,7 +2262,6 @@
                 <div class="panel-header">
 
                     <div>
-
                         <h3>Edit billing plan</h3>
 
                         <p>
@@ -2601,7 +2390,6 @@
                         <div
                                 id="edit-slab-rows"
                                 class="slab-list">
-
                         </div>
 
                     </div>
@@ -2646,13 +2434,11 @@
             <div class="section-heading">
 
                 <div>
-
                     <h2>Invoices</h2>
 
                     <p>
                         View invoices available to the administrator.
                     </p>
-
                 </div>
 
                 <button
@@ -2676,6 +2462,7 @@
                         <thead>
 
                         <tr>
+                            <th>Invoice</th>
                             <th>Customer</th>
                             <th>Meter</th>
                             <th>Period</th>
@@ -2688,15 +2475,9 @@
                         <tbody id="admin-invoices-table">
 
                         <tr>
-
-                            <td
-                                    colspan="5"
-                                    class="empty-state">
-
+                            <td colspan="6" class="empty-state">
                                 Loading...
-
                             </td>
-
                         </tr>
 
                         </tbody>
@@ -2838,7 +2619,9 @@
                     </div>
 
 
-                    <div class="job-card">
+                    <div
+                            id="job-status-card"
+                            class="job-card hidden">
 
                         <div class="job-status-header">
 
@@ -2850,10 +2633,6 @@
 
                             </span>
 
-                            <strong id="job-status-id">
-                                —
-                            </strong>
-
                         </div>
 
 
@@ -2861,18 +2640,14 @@
                                 id="job-status-json"
                                 class="json-view"></pre>
 
-                        <div class="form-actions">
+                    </div>
 
-                            <button
-                                    id="check-latest-job"
-                                    type="button"
-                                    class="btn btn-secondary">
 
-                                Check latest job
+                    <div
+                            id="job-status-empty"
+                            class="empty-state">
 
-                            </button>
-
-                        </div>
+                        Start a billing job to view its status.
 
                     </div>
 
@@ -2945,11 +2720,7 @@
 
                     <pre
                             id="monitor-health-json"
-                            class="json-view">
-
-Loading...
-
-                    </pre>
+                            class="json-view">Loading...</pre>
 
                 </article>
 
@@ -2977,11 +2748,7 @@ Loading...
 
                     <pre
                             id="monitor-info-json"
-                            class="json-view">
-
-Loading...
-
-                    </pre>
+                            class="json-view">Loading...</pre>
 
                 </article>
 
@@ -3009,11 +2776,7 @@ Loading...
 
                 <pre
                         id="monitor-metrics-json"
-                        class="json-view large">
-
-Loading...
-
-                </pre>
+                        class="json-view large">Loading...</pre>
 
             </article>
 
