@@ -1,0 +1,96 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+    branches:
+      - main
+
+concurrency:
+  group: billing-production-deployment
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    environment:
+      name: production
+
+    steps:
+      - name: Prepare SSH key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+        run: |
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$RUNNER_TEMP/lightsail_key"
+          chmod 600 "$RUNNER_TEMP/lightsail_key"
+
+      - name: Add Lightsail host to known_hosts
+        env:
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+        run: |
+          ssh-keyscan -H "$LIGHTSAIL_HOST" > "$RUNNER_TEMP/known_hosts"
+
+      - name: Deploy approved commit
+        env:
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+          LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          ssh \
+            -i "$RUNNER_TEMP/lightsail_key" \
+            -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" \
+            "$LIGHTSAIL_USER@$LIGHTSAIL_HOST" \
+            "bash -s -- '$DEPLOY_SHA' '$DB_USERNAME' '$DB_PASSWORD'" <<'REMOTE_SCRIPT'
+
+          set -e
+
+          SHA="$1"
+          DB_USERNAME="$2"
+          DB_PASSWORD="$3"
+
+          trap 'rm -f /run/billing-secrets.env; rm -rf /tmp/billing-deployment' EXIT
+
+          REPO="karmarankartik/billing-software"
+          RAW_BASE="https://raw.githubusercontent.com/$REPO/$SHA"
+
+          echo "=========================================="
+          echo "Starting production deployment"
+          echo "Commit: $SHA"
+          echo "=========================================="
+
+          rm -rf /tmp/billing-deployment
+          mkdir -p /tmp/billing-deployment
+
+          curl -fsSL \
+            "$RAW_BASE/deployment/deployment.sh" \
+            -o /tmp/billing-deployment/deployment.sh
+
+          curl -fsSL \
+            "$RAW_BASE/docker-compose.yml" \
+            -o /tmp/billing-deployment/docker-compose.yml
+
+          chmod +x /tmp/billing-deployment/deployment.sh
+
+          printf 'DB_USERNAME=%s\nDB_PASSWORD=%s\n' \
+            "$DB_USERNAME" \
+            "$DB_PASSWORD" \
+            > /run/billing-secrets.env
+
+          chmod 600 /run/billing-secrets.env
+
+          cd /tmp/billing-deployment
+
+          ./deployment.sh "$SHA"
+
+          REMOTE_SCRIPT
