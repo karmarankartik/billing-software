@@ -43,17 +43,23 @@ jobs:
         env:
           LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           ssh \
             -i "$RUNNER_TEMP/lightsail_key" \
             -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" \
             "$LIGHTSAIL_USER@$LIGHTSAIL_HOST" \
-            "bash -s -- '$DEPLOY_SHA'" <<'REMOTE_SCRIPT'
+            "bash -s -- '$DEPLOY_SHA' '$DB_USERNAME' '$DB_PASSWORD'" <<'REMOTE_SCRIPT'
 
           set -e
 
           SHA="$1"
+          DB_USERNAME="$2"
+          DB_PASSWORD="$3"
+
+          trap 'rm -f /run/billing-secrets.env; rm -rf /tmp/billing-deployment' EXIT
 
           REPO="karmarankartik/billing-software"
           RAW_BASE="https://raw.githubusercontent.com/$REPO/$SHA"
@@ -76,10 +82,15 @@ jobs:
 
           chmod +x /tmp/billing-deployment/deployment.sh
 
+          printf 'DB_USERNAME=%s\nDB_PASSWORD=%s\n' \
+            "$DB_USERNAME" \
+            "$DB_PASSWORD" \
+            > /run/billing-secrets.env
+
+          chmod 600 /run/billing-secrets.env
+
           cd /tmp/billing-deployment
 
           ./deployment.sh "$SHA"
-
-          rm -rf /tmp/billing-deployment
 
           REMOTE_SCRIPT
