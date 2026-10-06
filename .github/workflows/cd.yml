@@ -26,11 +26,6 @@ jobs:
       name: production
 
     steps:
-      - name: Checkout approved commit
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-
       - name: Prepare SSH key
         env:
           SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_KEY }}
@@ -38,13 +33,13 @@ jobs:
           printf '%s\n' "$SSH_PRIVATE_KEY" > "$RUNNER_TEMP/lightsail_key"
           chmod 600 "$RUNNER_TEMP/lightsail_key"
 
-      - name: Add Lightsail host to known hosts
+      - name: Add Lightsail host to known_hosts
         env:
           LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
         run: |
           ssh-keyscan -H "$LIGHTSAIL_HOST" > "$RUNNER_TEMP/known_hosts"
 
-      - name: Deploy approved image
+      - name: Deploy approved commit
         env:
           LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
@@ -60,17 +55,31 @@ jobs:
 
           SHA="$1"
 
-          echo "Deploying image:"
-          echo "ghcr.io/karmarankartik/billing-software:$SHA"
+          REPO="karmarankartik/billing-software"
+          RAW_BASE="https://raw.githubusercontent.com/$REPO/$SHA"
+
+          echo "=========================================="
+          echo "Starting production deployment"
+          echo "Commit: $SHA"
+          echo "=========================================="
+
+          rm -rf /tmp/billing-deployment
+          mkdir -p /tmp/billing-deployment
 
           curl -fsSL \
-            "https://raw.githubusercontent.com/karmarankartik/billing-software/main/deployment/deployment.sh" \
-            -o /tmp/deployment.sh
+            "$RAW_BASE/deployment/deployment.sh" \
+            -o /tmp/billing-deployment/deployment.sh
 
-          chmod +x /tmp/deployment.sh
+          curl -fsSL \
+            "$RAW_BASE/docker-compose.yml" \
+            -o /tmp/billing-deployment/docker-compose.yml
 
-          /tmp/deployment.sh "$SHA"
+          chmod +x /tmp/billing-deployment/deployment.sh
 
-          rm -f /tmp/deployment.sh
+          cd /tmp/billing-deployment
+
+          ./deployment.sh "$SHA"
+
+          rm -rf /tmp/billing-deployment
 
           REMOTE_SCRIPT
