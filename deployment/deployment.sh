@@ -38,7 +38,7 @@ docker compose \
 echo ""
 echo "Checking application health..."
 
-for ATTEMPT in 1 2 3; do
+for ATTEMPT in {1..12}; do
 
     echo "Health check $ATTEMPT/3..."
 
