@@ -22,8 +22,6 @@
 
         assignments: "/api/water-meter-assignments",
 
-        readings: "/api/water-meter-readings",
-
         plans: "/api/billing-plans",
 
         invoices: "/api/invoices",
@@ -36,12 +34,22 @@
         metrics: "/actuator/metrics"
     };
 
-    const STORAGE_KEYS = {
-        sessionId: "billing.sessionId",
-        username: "billing.username",
-        role: "billing.role",
-        lastJobId: "billing.lastJobId"
-    };
+
+    /* =========================================================
+       APPLICATION STATE
+       ========================================================= */
+
+    /*
+     * IMPORTANT:
+     *
+     * Authentication is intentionally kept only in JavaScript
+     * memory.
+     *
+     * No localStorage.
+     * No sessionStorage.
+     *
+     * Refreshing the page therefore logs the user out.
+     */
 
     const state = {
         sessionId: null,
@@ -52,6 +60,7 @@
 
         myMeters: [],
         adminMeters: [],
+        customers: [],
         plans: [],
         invoices: [],
 
@@ -97,7 +106,10 @@
     }
 
     function escapeHtml(value) {
-        if (value === null || value === undefined) {
+        if (
+            value === null ||
+            value === undefined
+        ) {
             return "";
         }
 
@@ -111,8 +123,12 @@
 
     function safeJson(value) {
         try {
-            return JSON.stringify(value, null, 2);
-        } catch (error) {
+            return JSON.stringify(
+                value,
+                null,
+                2
+            );
+        } catch {
             return String(value);
         }
     }
@@ -131,7 +147,10 @@
             return value;
         }
 
-        if (!value || typeof value !== "object") {
+        if (
+            !value ||
+            typeof value !== "object"
+        ) {
             return [];
         }
 
@@ -152,51 +171,28 @@
 
 
     /* =========================================================
-       STORAGE / SESSION
+       SESSION
        ========================================================= */
 
-    function loadSession() {
-        state.sessionId =
-            sessionStorage.getItem(STORAGE_KEYS.sessionId);
-
-        state.username =
-            sessionStorage.getItem(STORAGE_KEYS.username);
-
-        state.role =
-            sessionStorage.getItem(STORAGE_KEYS.role);
-
-        state.lastJobId =
-            sessionStorage.getItem(STORAGE_KEYS.lastJobId);
-    }
-
-    function saveSession(sessionId, username, role) {
+    function saveSession(
+        sessionId,
+        username,
+        role
+    ) {
         state.sessionId = sessionId;
         state.username = username;
         state.role = role;
-
-        sessionStorage.setItem(
-            STORAGE_KEYS.sessionId,
-            sessionId
-        );
-
-        sessionStorage.setItem(
-            STORAGE_KEYS.username,
-            username
-        );
-
-        sessionStorage.setItem(
-            STORAGE_KEYS.role,
-            role
-        );
     }
 
     function clearSession() {
         state.sessionId = null;
         state.username = null;
         state.role = null;
+        state.currentSection = null;
 
         state.myMeters = [];
         state.adminMeters = [];
+        state.customers = [];
         state.plans = [];
         state.invoices = [];
 
@@ -207,18 +203,18 @@
         state.lastJobId = null;
 
         if (state.jobPollingTimer) {
-            clearInterval(state.jobPollingTimer);
+            clearInterval(
+                state.jobPollingTimer
+            );
+
             state.jobPollingTimer = null;
         }
-
-        sessionStorage.removeItem(STORAGE_KEYS.sessionId);
-        sessionStorage.removeItem(STORAGE_KEYS.username);
-        sessionStorage.removeItem(STORAGE_KEYS.role);
-        sessionStorage.removeItem(STORAGE_KEYS.lastJobId);
     }
 
     function isAuthenticated() {
-        return Boolean(state.sessionId);
+        return Boolean(
+            state.sessionId
+        );
     }
 
     function isAdmin() {
@@ -258,7 +254,10 @@
             );
         }
 
-        if (!skipAuth && state.sessionId) {
+        if (
+            !skipAuth &&
+            state.sessionId
+        ) {
             headers.set(
                 "Authorization",
                 `Bearer ${state.sessionId}`
@@ -291,16 +290,22 @@
         }
 
         let body = null;
+
         const contentType =
-            response.headers.get("content-type") || "";
+            response.headers.get(
+                "content-type"
+            ) || "";
 
         try {
             if (
-                contentType.includes("application/json")
+                contentType.includes(
+                    "application/json"
+                )
             ) {
                 body = await response.json();
             } else {
-                const text = await response.text();
+                const text =
+                    await response.text();
 
                 if (text) {
                     try {
@@ -316,17 +321,6 @@
             body = null;
         }
 
-        /*
-         * Backend contract:
-         *
-         * {
-         *   success: false,
-         *   errorMessage: "...",
-         *   httpStatusCode: "...",
-         *   data: null
-         * }
-         */
-
         if (!response.ok) {
             const backendMessage =
                 body &&
@@ -337,24 +331,18 @@
                 backendMessage ||
                 `Request failed with HTTP ${response.status}.`;
 
+            if (!silent) {
+                showError(message);
+            }
+
             if (
                 response.status === 401 ||
                 response.status === 403
             ) {
-                if (!silent) {
-                    showError(message);
-                }
-
-                /*
-                 * Give the user a moment to see the backend
-                 * message before returning to login.
-                 */
                 setTimeout(() => {
                     clearSession();
                     showLoginView();
                 }, 800);
-            } else if (!silent) {
-                showError(message);
             }
 
             throw {
@@ -371,24 +359,23 @@
             Object.prototype.hasOwnProperty.call(
                 body,
                 "success"
-            )
+            ) &&
+            body.success !== true
         ) {
-            if (body.success !== true) {
-                const message =
-                    body.errorMessage ||
-                    "The request was rejected by the server.";
+            const message =
+                body.errorMessage ||
+                "The request was rejected by the server.";
 
-                if (!silent) {
-                    showError(message);
-                }
-
-                throw {
-                    type: "BACKEND",
-                    status: response.status,
-                    body,
-                    message
-                };
+            if (!silent) {
+                showError(message);
             }
+
+            throw {
+                type: "BACKEND",
+                status: response.status,
+                body,
+                message
+            };
         }
 
         return {
@@ -438,7 +425,7 @@
 
 
     /* =========================================================
-       TOAST / ALERTS
+       TOASTS / ALERTS
        ========================================================= */
 
     function showToast(
@@ -466,7 +453,9 @@
         });
 
         setTimeout(() => {
-            toast.classList.remove("show");
+            toast.classList.remove(
+                "show"
+            );
 
             setTimeout(() => {
                 toast.remove();
@@ -475,26 +464,41 @@
     }
 
     function showSuccess(message) {
-        showToast(message, "success");
+        showToast(
+            message,
+            "success"
+        );
     }
 
     function showError(message) {
-        showToast(message, "error", 6000);
+        showToast(
+            message,
+            "error",
+            6000
+        );
 
-        const loginError = $("login-error");
+        const loginError =
+            $("login-error");
 
         if (
             loginError &&
             $("login-view") &&
-            !$("login-view").classList.contains("hidden")
+            !$("login-view").classList.contains(
+                "hidden"
+            )
         ) {
-            loginError.textContent = message;
+            loginError.textContent =
+                message;
+
             show(loginError);
         }
     }
 
     function showInfo(message) {
-        showToast(message, "info");
+        showToast(
+            message,
+            "info"
+        );
     }
 
     function setGlobalAlert(
@@ -506,7 +510,9 @@
 
         if (!element) return;
 
-        element.textContent = message;
+        element.textContent =
+            message;
+
         element.className =
             `global-alert ${type}`;
 
@@ -514,12 +520,14 @@
     }
 
     function clearGlobalAlert() {
-        hide($("global-alert"));
+        hide(
+            $("global-alert")
+        );
     }
 
 
     /* =========================================================
-       LOADING BUTTONS
+       BUTTON LOADING
        ========================================================= */
 
     function setButtonLoading(
@@ -530,21 +538,27 @@
         if (!button) return;
 
         if (loading) {
-            if (!button.dataset.originalText) {
+            if (
+                !button.dataset.originalText
+            ) {
                 button.dataset.originalText =
                     button.textContent.trim();
             }
 
             button.disabled = true;
-            button.textContent = loadingText;
+            button.textContent =
+                loadingText;
         } else {
             button.disabled = false;
 
-            if (button.dataset.originalText) {
+            if (
+                button.dataset.originalText
+            ) {
                 button.textContent =
                     button.dataset.originalText;
 
-                delete button.dataset.originalText;
+                delete button.dataset
+                    .originalText;
             }
         }
     }
@@ -555,10 +569,16 @@
        ========================================================= */
 
     function showLoginView() {
-        show($("login-view"));
-        hide($("app-view"));
+        show(
+            $("login-view")
+        );
 
-        const error = $("login-error");
+        hide(
+            $("app-view")
+        );
+
+        const error =
+            $("login-error");
 
         if (error) {
             error.textContent = "";
@@ -570,25 +590,106 @@
     }
 
     function showAppView() {
-        hide($("login-view"));
-        show($("app-view"));
+        if (!isAuthenticated()) {
+            showLoginView();
+            return;
+        }
+
+        if (
+            !isAdmin() &&
+            !isCustomer()
+        ) {
+            clearSession();
+            showLoginView();
+            return;
+        }
+
+        hide(
+            $("login-view")
+        );
+
+        show(
+            $("app-view")
+        );
 
         updateSessionUI();
 
         if (isAdmin()) {
-            show($("admin-nav"));
-            hide($("customer-nav"));
+            show(
+                $("admin-nav")
+            );
 
-            navigateTo("admin-overview");
-        } else {
-            show($("customer-nav"));
-            hide($("admin-nav"));
+            hide(
+                $("customer-nav")
+            );
 
-            navigateTo("customer-overview");
+            navigateTo(
+                "admin-overview"
+            );
+
+            return;
         }
+
+        show(
+            $("customer-nav")
+        );
+
+        hide(
+            $("admin-nav")
+        );
+
+        navigateTo(
+            "customer-overview"
+        );
     }
 
-    function navigateTo(sectionName) {
+
+    /* =========================================================
+       ROLE / NAVIGATION GUARDS
+       ========================================================= */
+
+    function canAccessSection(
+        sectionName
+    ) {
+        if (
+            sectionName.startsWith(
+                "admin-"
+            )
+        ) {
+            return isAdmin();
+        }
+
+        if (
+            sectionName.startsWith(
+                "customer-"
+            )
+        ) {
+            return isCustomer();
+        }
+
+        return false;
+    }
+
+    function navigateTo(
+        sectionName
+    ) {
+        if (!isAuthenticated()) {
+            showLoginView();
+            return;
+        }
+
+        if (
+            !canAccessSection(
+                sectionName
+            )
+        ) {
+            showError(
+                "You are not authorized to access this section."
+            );
+
+            return;
+        }
+
         const section =
             $(`section-${sectionName}`);
 
@@ -596,83 +697,129 @@
             return;
         }
 
-        const sections =
-            $$(".page-section");
+        $$(".page-section")
+            .forEach((item) => {
+                item.classList.remove(
+                    "active"
+                );
+            });
 
-        sections.forEach((item) => {
-            item.classList.remove("active");
-        });
-
-        section.classList.add("active");
+        section.classList.add(
+            "active"
+        );
 
         state.currentSection =
             sectionName;
 
-        updateNavigationState(sectionName);
-        updatePageHeader(sectionName);
+        updateNavigationState(
+            sectionName
+        );
+
+        updatePageHeader(
+            sectionName
+        );
+
         closeMobileSidebar();
 
-        loadSectionData(sectionName);
-    }
-
-    function updateNavigationState(sectionName) {
-        $$(".nav-item[data-section]").forEach(
-            (button) => {
-                button.classList.toggle(
-                    "active",
-                    button.dataset.section ===
-                    sectionName
-                );
-            }
+        loadSectionData(
+            sectionName
         );
     }
 
-    function updatePageHeader(sectionName) {
+    function updateNavigationState(
+        sectionName
+    ) {
+        $$(".nav-item[data-section]")
+            .forEach((button) => {
+                button.classList.toggle(
+                    "active",
+                    button.dataset.section ===
+                        sectionName
+                );
+            });
+    }
+
+    function updatePageHeader(
+        sectionName
+    ) {
         const titles = {
             "customer-overview":
-                ["Customer", "Overview"],
+                [
+                    "Customer",
+                    "Overview"
+                ],
 
             "customer-meters":
-                ["Customer", "My Water Meters"],
-
-            "customer-reading":
-                ["Customer", "Meter Reading"],
+                [
+                    "Customer",
+                    "My Water Meters"
+                ],
 
             "customer-invoices":
-                ["Customer", "My Invoices"],
+                [
+                    "Customer",
+                    "My Invoices"
+                ],
 
             "customer-generate":
-                ["Customer", "Generate Invoice"],
+                [
+                    "Customer",
+                    "Generate Invoice"
+                ],
 
             "customer-account":
-                ["Customer", "Account"],
+                [
+                    "Customer",
+                    "Account"
+                ],
 
             "admin-overview":
-                ["Administrator", "Overview"],
+                [
+                    "Administrator",
+                    "Overview"
+                ],
 
             "admin-users":
-                ["Administrator", "Users"],
+                [
+                    "Administrator",
+                    "Users"
+                ],
 
             "admin-meters":
-                ["Administrator", "Water Meters"],
+                [
+                    "Administrator",
+                    "Water Meters"
+                ],
 
             "admin-assignments":
-                ["Administrator", "Assignments"],
-
-            "admin-readings":
-                ["Administrator", "Meter Readings"],
+                [
+                    "Administrator",
+                    "Assignments"
+                ],
 
             "admin-plans":
-                ["Administrator", "Billing Plans"],
+                [
+                    "Administrator",
+                    "Billing Plans"
+                ],
 
             "admin-invoices":
-                ["Administrator", "Invoices"],
+                [
+                    "Administrator",
+                    "Invoices"
+                ],
 
             "admin-billing":
-                ["Administrator", "Billing Jobs"],
+                [
+                    "Administrator",
+                    "Billing Jobs"
+                ],
 
             "admin-monitoring":
-                ["Administrator", "Monitoring"]
+                [
+                    "Administrator",
+                    "Monitoring"
+                ]
         };
 
         const title =
@@ -701,7 +848,9 @@
             state.role || "CUSTOMER";
 
         const initial =
-            username.charAt(0).toUpperCase();
+            username
+                .charAt(0)
+                .toUpperCase();
 
         setText(
             "session-username",
@@ -750,7 +899,7 @@
 
         setText(
             "breadcrumb-role",
-            role === "ADMIN"
+            isAdmin()
                 ? "Administrator"
                 : "Customer"
         );
@@ -758,97 +907,12 @@
 
 
     /* =========================================================
-       SECTION DATA LOADING
-       ========================================================= */
-
-    async function loadSectionData(sectionName) {
-        if (!isAuthenticated()) {
-            return;
-        }
-
-        try {
-            switch (sectionName) {
-
-                case "customer-overview":
-                    await loadCustomerOverview();
-                    break;
-
-                case "customer-meters":
-                    await loadMyMeters();
-                    break;
-
-                case "customer-reading":
-                    await loadMyMeters();
-                    break;
-
-                case "customer-invoices":
-                    await loadCustomerInvoices();
-                    break;
-
-                case "customer-generate":
-                    initialiseBillingPeriod(
-                        "customer-billing-year",
-                        "customer-billing-month"
-                    );
-                    await loadMyMeters();
-                    break;
-
-                case "customer-account":
-                    updateSessionUI();
-                    break;
-
-                case "admin-overview":
-                    await loadAdminOverview();
-                    break;
-
-                case "admin-users":
-                    break;
-
-                case "admin-meters":
-                    await loadAdminMeters();
-                    await loadAdminPlansIntoSelects();
-                    break;
-
-                case "admin-assignments":
-                    break;
-
-                case "admin-readings":
-                    break;
-
-                case "admin-plans":
-                    await loadAdminPlans();
-                    break;
-
-                case "admin-invoices":
-                    await loadAdminInvoices();
-                    break;
-
-                case "admin-billing":
-                    initialiseBillingPeriod(
-                        "admin-billing-year",
-                        "admin-billing-month"
-                    );
-                    restoreLastJob();
-                    break;
-
-                case "admin-monitoring":
-                    await loadMonitoring();
-                    break;
-            }
-        } catch (error) {
-            /*
-             * apiRequest already displays backend errors.
-             * Nothing else is needed here.
-             */
-        }
-    }
-
-
-    /* =========================================================
        LOGIN
        ========================================================= */
 
-    async function handleLogin(event) {
+    async function handleLogin(
+        event
+    ) {
         event.preventDefault();
 
         const form =
@@ -860,21 +924,28 @@
             );
 
         const username =
-            $("login-username").value.trim();
+            $("login-username")
+                ?.value
+                .trim();
 
         const password =
-            $("login-password").value;
+            $("login-password")
+                ?.value;
 
-        const selectedRole =
-            $("login-role").value;
+        hide(
+            $("login-error")
+        );
 
-        hide($("login-error"));
         clearGlobalAlert();
 
-        if (!username || !password) {
+        if (
+            !username ||
+            !password
+        ) {
             showError(
                 "Username and password are required."
             );
+
             return;
         }
 
@@ -890,10 +961,11 @@
                     ENDPOINTS.login,
                     {
                         method: "POST",
-                        body: JSON.stringify({
-                            username,
-                            password
-                        })
+                        body:
+                            JSON.stringify({
+                                username,
+                                password
+                            })
                     },
                     {
                         skipAuth: true
@@ -903,57 +975,66 @@
             const data =
                 responseData(result);
 
+            /*
+             * The backend is authoritative.
+             *
+             * There is deliberately NO role
+             * selector and NO frontend fallback.
+             */
             const sessionId =
                 data?.sessionId;
 
-            if (!sessionId) {
+            const role =
+                data?.role;
+
+            if (
+                !sessionId ||
+                !role
+            ) {
                 throw {
                     type: "CLIENT",
                     message:
-                        "Login succeeded but no session ID was returned by the backend."
+                        "Login succeeded but the backend did not return a session ID and role."
                 };
             }
 
-            /*
-             * The selected dashboard is only a UI preference.
-             * The actual role comes from the backend only if
-             * the login response provides it.
-             *
-             * If it does not, the selected role is used.
-             */
-            const backendRole =
-                firstDefined(
-                    data?.role,
-                    data?.userRole,
-                    data?.user?.role
-                );
-
-            const actualRole =
-                backendRole ||
-                selectedRole;
+            if (
+                ![
+                    "ADMIN",
+                    "CUSTOMER"
+                ].includes(role)
+            ) {
+                throw {
+                    type: "CLIENT",
+                    message:
+                        `Unsupported user role returned by backend: ${role}`
+                };
+            }
 
             saveSession(
                 sessionId,
                 username,
-                actualRole
-            );
-
-            showSuccess(
-                responseSuccessMessage(result)
+                role
             );
 
             form.reset();
 
+            showSuccess(
+                responseSuccessMessage(
+                    result
+                )
+            );
+
             showAppView();
 
         } catch (error) {
-            /*
-             * apiRequest already handles backend errors.
-             */
             if (
-                error?.type === "CLIENT"
+                error?.type ===
+                "CLIENT"
             ) {
-                showError(error.message);
+                showError(
+                    error.message
+                );
             }
         } finally {
             setButtonLoading(
@@ -974,43 +1055,20 @@
 
         try {
             if (sessionId) {
-                const result =
-                    await apiRequest(
-                        ENDPOINTS.logout,
-                        {
-                            method: "POST"
-                        },
-                        {
-                            silent: true
-                        }
-                    );
-
-                if (
-                    result.body &&
-                    result.body.success === false
-                ) {
-                    showError(
-                        result.body.errorMessage ||
-                        "Logout failed."
-                    );
-
-                    return;
-                }
-
-                if (
-                    result.body &&
-                    result.body.success === true
-                ) {
-                    showSuccess(
-                        responseSuccessMessage(
-                            result
-                        )
-                    );
-                }
+                await apiRequest(
+                    ENDPOINTS.logout,
+                    {
+                        method: "POST"
+                    },
+                    {
+                        silent: true
+                    }
+                );
             }
-        } catch (error) {
+        } catch {
             /*
-             * A local logout is still performed below.
+             * Local session is cleared even if
+             * backend logout fails.
              */
         } finally {
             clearSession();
@@ -1020,22 +1078,169 @@
 
 
     /* =========================================================
+       SECTION LOADING
+       ========================================================= */
+
+    async function loadSectionData(
+        sectionName
+    ) {
+        if (
+            !isAuthenticated() ||
+            !canAccessSection(sectionName)
+        ) {
+            return;
+        }
+
+        try {
+            switch (sectionName) {
+
+                case "customer-overview":
+                    await loadCustomerOverview();
+                    break;
+
+                case "customer-meters":
+                    await loadMyMeters();
+                    break;
+
+                case "customer-invoices":
+                    await loadCustomerInvoices();
+                    break;
+
+                case "customer-generate":
+                    initialiseBillingPeriod(
+                        "customer-billing-year",
+                        "customer-billing-month"
+                    );
+                    break;
+
+                case "customer-account":
+                    updateSessionUI();
+                    break;
+
+                case "admin-overview":
+                    await loadAdminOverview();
+                    break;
+
+                case "admin-users":
+                    await loadAdminCustomers();
+                    break;
+
+                case "admin-meters":
+                    await Promise.all([
+                        loadAdminMeters(),
+                        loadAdminPlans()
+                    ]);
+                    break;
+
+                case "admin-assignments":
+                    await Promise.all([
+                        loadAdminCustomers(),
+                        loadAdminMeters()
+                    ]);
+                    break;
+
+                case "admin-plans":
+                    await loadAdminPlans();
+                    break;
+
+                case "admin-invoices":
+                    await loadAdminInvoices();
+                    break;
+
+                case "admin-billing":
+                    initialiseBillingPeriod(
+                        "admin-billing-year",
+                        "admin-billing-month"
+                    );
+                    break;
+
+                case "admin-monitoring":
+                    await loadMonitoring();
+                    break;
+            }
+        } catch {
+            /*
+             * apiRequest already displays the
+             * backend error.
+             */
+        }
+    }
+
+
+    /* =========================================================
        CUSTOMER OVERVIEW
        ========================================================= */
 
     async function loadCustomerOverview() {
-        const results =
-            await Promise.allSettled([
-                loadMyMeters(true),
-                loadCustomerInvoices(true)
-            ]);
+        const [
+            metersResult,
+            invoicesResult
+        ] = await Promise.all([
+            apiRequest(
+                ENDPOINTS.myMeters,
+                { method: "GET" }
+            ),
+            apiRequest(
+                ENDPOINTS.invoices,
+                { method: "GET" }
+            )
+        ]);
 
-        /*
-         * Errors are already displayed by apiRequest.
-         * Promise.allSettled prevents one failed widget
-         * from preventing the other widget from loading.
-         */
-        return results;
+        state.myMeters =
+            arrayFrom(
+                responseData(
+                    metersResult
+                )
+            );
+
+        state.invoices =
+            arrayFrom(
+                responseData(
+                    invoicesResult
+                )
+            );
+
+        renderCustomerMeters(
+            state.myMeters
+        );
+
+        renderCustomerInvoices(
+            state.invoices
+        );
+
+        setText(
+            "customer-meter-count",
+            state.myMeters.length
+        );
+
+        setText(
+            "customer-invoice-count",
+            state.invoices.length
+        );
+
+        const sortedInvoices =
+            [...state.invoices]
+                .sort(
+                    compareInvoicesDescending
+                );
+
+        if (
+            sortedInvoices.length
+        ) {
+            setText(
+                "customer-latest-invoice",
+                formatCurrency(
+                    invoiceAmount(
+                        sortedInvoices[0]
+                    )
+                )
+            );
+        } else {
+            setText(
+                "customer-latest-invoice",
+                "—"
+            );
+        }
     }
 
 
@@ -1043,9 +1248,7 @@
        CUSTOMER METERS
        ========================================================= */
 
-    async function loadMyMeters(
-        overviewOnly = false
-    ) {
+    async function loadMyMeters() {
         const result =
             await apiRequest(
                 ENDPOINTS.myMeters,
@@ -1054,35 +1257,25 @@
                 }
             );
 
-        const data =
-            responseData(result);
-
-        const meters =
-            arrayFrom(data);
-
         state.myMeters =
-            meters;
+            arrayFrom(
+                responseData(result)
+            );
 
         renderCustomerMeters(
-            meters,
-            overviewOnly
-        );
-
-        populateCustomerReadingMeters(
-            meters
+            state.myMeters
         );
 
         setText(
             "customer-meter-count",
-            meters.length
+            state.myMeters.length
         );
 
-        return meters;
+        return state.myMeters;
     }
 
     function renderCustomerMeters(
-        meters,
-        overviewOnly = false
+        meters
     ) {
         const overviewBody =
             $("customer-overview-meters");
@@ -1090,134 +1283,88 @@
         const tableBody =
             $("customer-meters-table");
 
+        const rows =
+            meters.length
+                ? meters
+                    .map(
+                        (meter) => `
+                            <tr>
+                                <td>
+                                    <strong>
+                                        ${escapeHtml(
+                                            meterNumber(
+                                                meter
+                                            )
+                                        )}
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    ${escapeHtml(
+                                        planName(
+                                            meter
+                                        )
+                                    )}
+                                </td>
+
+                                <td>
+                                    <span class="badge badge-success">
+                                        Assigned
+                                    </span>
+                                </td>
+                            </tr>
+                        `
+                    )
+                    .join("")
+                : emptyRow(
+                    3,
+                    "No water meters are assigned to your account."
+                );
+
         if (overviewBody) {
-            if (!meters.length) {
-                overviewBody.innerHTML =
-                    emptyRow(
+            overviewBody.innerHTML =
+                meters.length
+                    ? meters
+                        .slice(0, 5)
+                        .map(
+                            (meter) => `
+                                <tr>
+                                    <td>
+                                        <strong>
+                                            ${escapeHtml(
+                                                meterNumber(
+                                                    meter
+                                                )
+                                            )}
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            planName(
+                                                meter
+                                            )
+                                        )}
+                                    </td>
+
+                                    <td>
+                                        <span class="badge badge-success">
+                                            Assigned
+                                        </span>
+                                    </td>
+                                </tr>
+                            `
+                        )
+                        .join("")
+                    : emptyRow(
                         3,
                         "No water meters are assigned to your account."
                     );
-            } else {
-                overviewBody.innerHTML =
-                    meters
-                        .slice(0, 5)
-                        .map((meter) => `
-                            <tr>
-                                <td>
-                                    <strong>
-                                        ${escapeHtml(
-                            meterNumber(meter)
-                        )}
-                                    </strong>
-                                </td>
-                                <td>
-                                    ${escapeHtml(
-                            planName(meter)
-                        )}
-                                </td>
-                                <td>
-                                    <span class="badge badge-success">
-                                        Assigned
-                                    </span>
-                                </td>
-                            </tr>
-                        `)
-                        .join("");
-            }
         }
 
-        if (
-            tableBody &&
-            !overviewOnly
-        ) {
-            if (!meters.length) {
-                tableBody.innerHTML =
-                    emptyRow(
-                        5,
-                        "No water meters are assigned to your account."
-                    );
-            } else {
-                tableBody.innerHTML =
-                    meters
-                        .map((meter) => `
-                            <tr>
-                                <td>
-                                    ${escapeHtml(
-                            meterId(meter)
-                        )}
-                                </td>
-
-                                <td>
-                                    <strong>
-                                        ${escapeHtml(
-                            meterNumber(meter)
-                        )}
-                                    </strong>
-                                </td>
-
-                                <td>
-                                    ${escapeHtml(
-                            planName(meter)
-                        )}
-                                </td>
-
-                                <td>
-                                    <span class="badge badge-success">
-                                        Assigned
-                                    </span>
-                                </td>
-
-                                <td>
-                                    <button
-                                        type="button"
-                                        class="btn btn-ghost btn-sm"
-                                        data-action="use-meter-reading"
-                                        data-meter-id="${escapeHtml(
-                            meterId(meter)
-                        )}">
-                                        Submit reading
-                                    </button>
-                                </td>
-                            </tr>
-                        `)
-                        .join("");
-            }
-        }
-    }
-
-    function populateCustomerReadingMeters(
-        meters
-    ) {
-        const select =
-            $("customer-reading-meter");
-
-        if (!select) return;
-
-        const current =
-            select.value;
-
-        select.innerHTML =
-            `<option value="">Select meter</option>`;
-
-        meters.forEach((meter) => {
-            const id =
-                meterId(meter);
-
-            if (!id) return;
-
-            const option =
-                document.createElement("option");
-
-            option.value = id;
-
-            option.textContent =
-                `${meterNumber(meter)} (${id})`;
-
-            select.appendChild(option);
-        });
-
-        if (current) {
-            select.value = current;
+        if (tableBody) {
+            tableBody.innerHTML =
+                rows;
         }
     }
 
@@ -1226,9 +1373,7 @@
        CUSTOMER INVOICES
        ========================================================= */
 
-    async function loadCustomerInvoices(
-        overviewOnly = false
-    ) {
+    async function loadCustomerInvoices() {
         const result =
             await apiRequest(
                 ENDPOINTS.invoices,
@@ -1237,49 +1382,25 @@
                 }
             );
 
-        const data =
-            responseData(result);
-
-        const invoices =
-            arrayFrom(data);
-
         state.invoices =
-            invoices;
+            arrayFrom(
+                responseData(result)
+            );
 
         renderCustomerInvoices(
-            invoices,
-            overviewOnly
+            state.invoices
         );
 
         setText(
             "customer-invoice-count",
-            invoices.length
+            state.invoices.length
         );
 
-        if (invoices.length) {
-            const latest =
-                invoices[0];
-
-            const amount =
-                invoiceAmount(latest);
-
-            setText(
-                "customer-latest-invoice",
-                formatCurrency(amount)
-            );
-        } else {
-            setText(
-                "customer-latest-invoice",
-                "—"
-            );
-        }
-
-        return invoices;
+        return state.invoices;
     }
 
     function renderCustomerInvoices(
-        invoices,
-        overviewOnly = false
+        invoices
     ) {
         const overviewBody =
             $("customer-overview-invoices");
@@ -1293,305 +1414,132 @@
             );
 
         if (overviewBody) {
-            if (!sorted.length) {
-                overviewBody.innerHTML =
-                    emptyRow(
+            overviewBody.innerHTML =
+                sorted.length
+                    ? sorted
+                        .slice(0, 5)
+                        .map(
+                            (invoice) => `
+                                <tr>
+                                    <td>
+                                        <strong>
+                                            ${escapeHtml(
+                                                invoicePeriod(
+                                                    invoice
+                                                )
+                                            )}
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            formatCurrency(
+                                                invoiceAmount(
+                                                    invoice
+                                                )
+                                            )
+                                        )}
+                                    </td>
+
+                                    <td>
+                                        <span class="badge">
+                                            ${escapeHtml(
+                                                invoiceStatus(
+                                                    invoice
+                                                )
+                                            )}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `
+                        )
+                        .join("")
+                    : emptyRow(
                         3,
                         "No invoices found."
                     );
-            } else {
-                overviewBody.innerHTML =
-                    sorted
-                        .slice(0, 5)
-                        .map((invoice) => `
-                            <tr>
-                                <td>
-                                    <strong>
-                                        ${escapeHtml(
-                            invoiceId(invoice)
-                        )}
-                                    </strong>
-                                </td>
-
-                                <td>
-                                    ${escapeHtml(
-                            invoicePeriod(invoice)
-                        )}
-                                </td>
-
-                                <td>
-                                    ${escapeHtml(
-                            formatCurrency(
-                                invoiceAmount(
-                                    invoice
-                                )
-                            )
-                        )}
-                                </td>
-                            </tr>
-                        `)
-                        .join("");
-            }
         }
 
-        if (
-            tableBody &&
-            !overviewOnly
-        ) {
-            if (!sorted.length) {
-                tableBody.innerHTML =
-                    emptyRow(
-                        6,
+        if (tableBody) {
+            tableBody.innerHTML =
+                sorted.length
+                    ? sorted
+                        .map(
+                            (invoice) => `
+                                <tr>
+                                    <td>
+                                        <strong>
+                                            Invoice
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            customerName(
+                                                invoice
+                                            )
+                                        )}
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            invoiceMeter(
+                                                invoice
+                                            )
+                                        )}
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            invoicePeriod(
+                                                invoice
+                                            )
+                                        )}
+                                    </td>
+
+                                    <td>
+                                        <strong>
+                                            ${escapeHtml(
+                                                formatCurrency(
+                                                    invoiceAmount(
+                                                        invoice
+                                                    )
+                                                )
+                                            )}
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        <span class="badge">
+                                            ${escapeHtml(
+                                                invoiceStatus(
+                                                    invoice
+                                                )
+                                            )}
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <button
+                                            type="button"
+                                            class="btn btn-ghost btn-sm"
+                                            data-action="view-invoice"
+                                            data-invoice-id="${escapeHtml(
+                                                invoiceId(
+                                                    invoice
+                                                )
+                                            )}">
+                                            View
+                                        </button>
+                                    </td>
+                                </tr>
+                            `
+                        )
+                        .join("")
+                    : emptyRow(
+                        7,
                         "No invoices found."
                     );
-            } else {
-                tableBody.innerHTML =
-                    sorted
-                        .map((invoice) => `
-                            <tr>
-                                <td>
-                                    <strong>
-                                        ${escapeHtml(
-                            invoiceId(invoice)
-                        )}
-                                    </strong>
-                                </td>
-
-                                <td>
-                                    ${escapeHtml(
-                            customerName(invoice)
-                        )}
-                                </td>
-
-                                <td>
-                                    ${escapeHtml(
-                            invoiceMeter(invoice)
-                        )}
-                                </td>
-
-                                <td>
-                                    ${escapeHtml(
-                            invoicePeriod(invoice)
-                        )}
-                                </td>
-
-                                <td>
-                                    <strong>
-                                        ${escapeHtml(
-                            formatCurrency(
-                                invoiceAmount(
-                                    invoice
-                                )
-                            )
-                        )}
-                                    </strong>
-                                </td>
-
-                                <td>
-                                    <span class="badge">
-                                        ${escapeHtml(
-                            invoiceStatus(
-                                invoice
-                            )
-                        )}
-                                    </span>
-                                </td>
-
-                                <td>
-                                    <button
-                                        type="button"
-                                        class="btn btn-ghost btn-sm"
-                                        data-action="view-invoice"
-                                        data-invoice-id="${escapeHtml(
-                            invoiceId(invoice)
-                        )}">
-                                        View
-                                    </button>
-                                </td>
-                            </tr>
-                        `)
-                        .join("");
-            }
-        }
-    }
-
-
-    /* =========================================================
-       CUSTOMER METER READING
-       ========================================================= */
-
-    async function submitCustomerReading(
-        event
-    ) {
-        event.preventDefault();
-
-        const form =
-            event.currentTarget;
-
-        const button =
-            form.querySelector(
-                'button[type="submit"]'
-            );
-
-        const payload =
-            buildReadingPayload(
-                "customer"
-            );
-
-        setButtonLoading(
-            button,
-            true,
-            "Submitting..."
-        );
-
-        try {
-            const result =
-                await apiRequest(
-                    ENDPOINTS.readings,
-                    {
-                        method: "POST",
-                        body: JSON.stringify(
-                            payload
-                        )
-                    }
-                );
-
-            showSuccess(
-                responseSuccessMessage(result)
-            );
-
-            form.reset();
-
-            setDefaultDateTime(
-                "customer-reading-at"
-            );
-
-        } catch (error) {
-            // Error already displayed.
-        } finally {
-            setButtonLoading(
-                button,
-                false
-            );
-        }
-    }
-
-    function buildReadingPayload(
-        prefix
-    ) {
-        const meterIdValue =
-            $(
-                `${prefix}-reading-meter`
-            )?.value.trim();
-
-        const type =
-            $(
-                `${prefix}-reading-type`
-            )?.value;
-
-        const readingValue =
-            parseFloat(
-                $(
-                    `${prefix}-reading-value`
-                )?.value
-            );
-
-        const dateValue =
-            $(
-                `${prefix}-reading-at`
-            )?.value;
-
-        const ingestionKey =
-            $(
-                `${prefix}-ingestion-key`
-            )?.value.trim();
-
-        return {
-            waterMeterId: meterIdValue,
-            readingType: type,
-            readingValue,
-            readingAt:
-                localDateTimeToIso(
-                    dateValue
-                ),
-            ingestionKey
-        };
-    }
-
-    async function submitAdminReading(
-        event
-    ) {
-        event.preventDefault();
-
-        const form =
-            event.currentTarget;
-
-        const button =
-            form.querySelector(
-                'button[type="submit"]'
-            );
-
-        const payload = {
-            waterMeterId:
-                $("admin-reading-meter")
-                    .value.trim(),
-
-            readingType:
-            $("admin-reading-type")
-                .value,
-
-            readingValue:
-                parseFloat(
-                    $("admin-reading-value")
-                        .value
-                ),
-
-            readingAt:
-                localDateTimeToIso(
-                    $("admin-reading-at")
-                        .value
-                ),
-
-            ingestionKey:
-                $("admin-ingestion-key")
-                    .value.trim()
-        };
-
-        setButtonLoading(
-            button,
-            true,
-            "Submitting..."
-        );
-
-        try {
-            const result =
-                await apiRequest(
-                    ENDPOINTS.readings,
-                    {
-                        method: "POST",
-                        body: JSON.stringify(
-                            payload
-                        )
-                    }
-                );
-
-            showSuccess(
-                responseSuccessMessage(result)
-            );
-
-            form.reset();
-
-            setDefaultDateTime(
-                "admin-reading-at"
-            );
-
-        } catch (error) {
-            // Error already displayed.
-        } finally {
-            setButtonLoading(
-                button,
-                false
-            );
         }
     }
 
@@ -1605,6 +1553,13 @@
     ) {
         event.preventDefault();
 
+        if (!isCustomer()) {
+            showError(
+                "You are not authorized to generate customer invoices."
+            );
+            return;
+        }
+
         const form =
             event.currentTarget;
 
@@ -1614,18 +1569,26 @@
             );
 
         const year =
-            parseInt(
+            Number(
                 $("customer-billing-year")
-                    .value,
-                10
+                    ?.value
             );
 
         const month =
-            parseInt(
+            Number(
                 $("customer-billing-month")
-                    .value,
-                10
+                    ?.value
             );
+
+        if (
+            !year ||
+            !month
+        ) {
+            showError(
+                "Billing year and month are required."
+            );
+            return;
+        }
 
         setButtonLoading(
             button,
@@ -1639,25 +1602,22 @@
                     ENDPOINTS.generateInvoice,
                     {
                         method: "POST",
-                        body: JSON.stringify({
-                            year,
-                            month
-                        })
+                        body:
+                            JSON.stringify({
+                                year,
+                                month
+                            })
                     }
                 );
 
             showSuccess(
-                responseSuccessMessage(result)
+                responseSuccessMessage(
+                    result
+                )
             );
 
             await loadCustomerInvoices();
 
-            navigateTo(
-                "customer-invoices"
-            );
-
-        } catch (error) {
-            // Error already displayed.
         } finally {
             setButtonLoading(
                 button,
@@ -1674,22 +1634,140 @@
     async function loadAdminOverview() {
         const results =
             await Promise.allSettled([
-                loadAdminMeters(true),
-                loadAdminPlans(true),
-                loadAdminInvoices(true),
-                loadHealth(true)
+                loadAdminMeters(),
+                loadAdminPlans(),
+                loadAdminInvoices(),
+                loadHealth()
             ]);
+
+        /*
+         * Individual loaders already display their
+         * backend errors. We intentionally do not
+         * fabricate overview data.
+         */
 
         return results;
     }
 
 
     /* =========================================================
-       ADMIN USERS
+       ADMIN CUSTOMERS
        ========================================================= */
 
-    async function createUser(event) {
+    async function loadAdminCustomers() {
+        if (!isAdmin()) {
+            return [];
+        }
+
+        const result =
+            await apiRequest(
+                ENDPOINTS.users,
+                {
+                    method: "GET"
+                }
+            );
+
+        state.customers =
+            arrayFrom(
+                responseData(result)
+            );
+
+        populateCustomerSelects(
+            state.customers
+        );
+
+        return state.customers;
+    }
+
+    function populateCustomerSelects(
+        customers
+    ) {
+        const selects = [
+            $("assignment-user-id"),
+            $("unassignment-user-id")
+        ];
+
+        selects.forEach(
+            (select) => {
+                if (!select) {
+                    return;
+                }
+
+                const current =
+                    select.value;
+
+                select.innerHTML = `
+                    <option value="">
+                        Select customer
+                    </option>
+                `;
+
+                customers.forEach(
+                    (customer) => {
+                        const id =
+                            firstDefined(
+                                customer?.id,
+                                customer?.userId
+                            );
+
+                        const username =
+                            firstDefined(
+                                customer?.username,
+                                customer?.name,
+                                "Customer"
+                            );
+
+                        if (!id) {
+                            return;
+                        }
+
+                        const option =
+                            document.createElement(
+                                "option"
+                            );
+
+                        /*
+                         * UUID is used internally
+                         * as the option value.
+                         *
+                         * The user sees ONLY username.
+                         */
+                        option.value =
+                            String(id);
+
+                        option.textContent =
+                            username;
+
+                        select.appendChild(
+                            option
+                        );
+                    }
+                );
+
+                if (current) {
+                    select.value =
+                        current;
+                }
+            }
+        );
+    }
+
+
+    /* =========================================================
+       ADMIN USER MANAGEMENT
+       ========================================================= */
+
+    async function createUser(
+        event
+    ) {
         event.preventDefault();
+
+        if (!isAdmin()) {
+            showError(
+                "Administrator access is required."
+            );
+            return;
+        }
 
         const form =
             event.currentTarget;
@@ -1699,19 +1777,29 @@
                 'button[type="submit"]'
             );
 
-        const payload = {
-            username:
-                $("create-user-username")
-                    .value.trim(),
+        const username =
+            $("create-user-username")
+                ?.value
+                .trim();
 
-            password:
+        const password =
             $("create-user-password")
-                .value,
+                ?.value;
 
-            role:
+        const role =
             $("create-user-role")
-                .value
-        };
+                ?.value;
+
+        if (
+            !username ||
+            !password ||
+            !role
+        ) {
+            showError(
+                "Username, password and role are required."
+            );
+            return;
+        }
 
         setButtonLoading(
             button,
@@ -1725,20 +1813,25 @@
                     ENDPOINTS.users,
                     {
                         method: "POST",
-                        body: JSON.stringify(
-                            payload
-                        )
+                        body:
+                            JSON.stringify({
+                                username,
+                                password,
+                                role
+                            })
                     }
                 );
 
             showSuccess(
-                responseSuccessMessage(result)
+                responseSuccessMessage(
+                    result
+                )
             );
 
             form.reset();
 
-        } catch (error) {
-            // Error already displayed.
+            await loadAdminCustomers();
+
         } finally {
             setButtonLoading(
                 button,
@@ -1747,12 +1840,22 @@
         }
     }
 
-    async function lookupUser(event) {
+    async function lookupUser(
+        event
+    ) {
         event.preventDefault();
+
+        if (!isAdmin()) {
+            showError(
+                "Administrator access is required."
+            );
+            return;
+        }
 
         const id =
             $("user-lookup-id")
-                .value.trim();
+                ?.value
+                .trim();
 
         if (!id) {
             showError(
@@ -1764,7 +1867,9 @@
         try {
             const result =
                 await apiRequest(
-                    `${ENDPOINTS.users}/${encodeURIComponent(id)}`,
+                    `${ENDPOINTS.users}/${encodeURIComponent(
+                        id
+                    )}`,
                     {
                         method: "GET"
                     }
@@ -1776,23 +1881,27 @@
             state.currentUser =
                 user;
 
-            renderUserDetail(user);
-
-            showSuccess(
-                responseSuccessMessage(result)
+            renderUserDetail(
+                user
             );
 
-        } catch (error) {
-            hide(
-                $("user-detail-card")
-            );
+        } catch {
+            /*
+             * Backend error already shown.
+             */
         }
     }
 
-    function renderUserDetail(user) {
-        if (!user) return;
+    function renderUserDetail(
+        user
+    ) {
+        if (!user) {
+            return;
+        }
 
-        show($("user-detail-card"));
+        show(
+            $("user-detail-card")
+        );
 
         setText(
             "user-detail-title",
@@ -1800,14 +1909,6 @@
                 user.username,
                 user.name,
                 "User"
-            )
-        );
-
-        setText(
-            "user-detail-id",
-            firstDefined(
-                user.id,
-                user.userId
             )
         );
 
@@ -1825,6 +1926,10 @@
             "user-detail-role-value",
             user.role
         );
+
+        /*
+         * Deliberately do NOT render user.id.
+         */
     }
 
     function editCurrentUser() {
@@ -1832,18 +1937,27 @@
             state.currentUser;
 
         if (!user) {
+            showInfo(
+                "Look up a user first."
+            );
+            return;
+        }
+
+        const id =
+            firstDefined(
+                user.id,
+                user.userId
+            );
+
+        if (!id) {
             showError(
-                "Look up a user before editing."
+                "The backend did not return the user identifier."
             );
             return;
         }
 
         $("edit-user-id").value =
-            firstDefined(
-                user.id,
-                user.userId,
-                ""
-            );
+            id;
 
         $("edit-user-username").value =
             firstDefined(
@@ -1863,40 +1977,48 @@
         show(
             $("admin-user-edit-panel")
         );
-
-        $("admin-user-edit-panel")
-            .scrollIntoView({
-                behavior: "smooth",
-                block: "start"
-            });
     }
 
-    async function updateUser(event) {
+    async function updateUser(
+        event
+    ) {
         event.preventDefault();
 
-        const form =
-            event.currentTarget;
-
-        const button =
-            form.querySelector(
-                'button[type="submit"]'
+        if (!isAdmin()) {
+            showError(
+                "Administrator access is required."
             );
+            return;
+        }
 
         const id =
             $("edit-user-id")
-                .value.trim();
+                ?.value
+                .trim();
 
         const username =
             $("edit-user-username")
-                .value.trim();
-
-        const password =
-            $("edit-user-password")
-                .value;
+                ?.value
+                .trim();
 
         const role =
             $("edit-user-role")
-                .value;
+                ?.value;
+
+        const password =
+            $("edit-user-password")
+                ?.value;
+
+        if (
+            !id ||
+            !username ||
+            !role
+        ) {
+            showError(
+                "Username and role are required."
+            );
+            return;
+        }
 
         const payload = {
             username,
@@ -1908,6 +2030,12 @@
                 password;
         }
 
+        const button =
+            event.currentTarget
+                .querySelector(
+                    'button[type="submit"]'
+                );
+
         setButtonLoading(
             button,
             true,
@@ -1917,27 +2045,38 @@
         try {
             const result =
                 await apiRequest(
-                    `${ENDPOINTS.users}/${encodeURIComponent(id)}`,
+                    `${ENDPOINTS.users}/${encodeURIComponent(
+                        id
+                    )}`,
                     {
                         method: "PUT",
-                        body: JSON.stringify(
-                            payload
-                        )
+                        body:
+                            JSON.stringify(
+                                payload
+                            )
                     }
                 );
 
             showSuccess(
-                responseSuccessMessage(result)
+                responseSuccessMessage(
+                    result
+                )
             );
 
             hide(
                 $("admin-user-edit-panel")
             );
 
-            await lookupUserById(id);
+            await loadAdminCustomers();
 
-        } catch (error) {
-            // Error already displayed.
+            /*
+             * Refresh lookup result if the
+             * currently selected user is still active.
+             */
+            await lookupUserById(
+                id
+            );
+
         } finally {
             setButtonLoading(
                 button,
@@ -1946,12 +2085,23 @@
         }
     }
 
-    async function lookupUserById(id) {
+    async function lookupUserById(
+        id
+    ) {
+        if (!id) {
+            return;
+        }
+
         const result =
             await apiRequest(
-                `${ENDPOINTS.users}/${encodeURIComponent(id)}`,
+                `${ENDPOINTS.users}/${encodeURIComponent(
+                    id
+                )}`,
                 {
                     method: "GET"
+                },
+                {
+                    silent: true
                 }
             );
 
@@ -1961,51 +2111,62 @@
         state.currentUser =
             user;
 
-        renderUserDetail(user);
-
-        return user;
+        renderUserDetail(
+            user
+        );
     }
 
     async function deleteCurrentUser() {
-        const user =
-            state.currentUser;
-
-        if (!user) {
-            showError(
-                "Look up a user before deleting."
+        if (!state.currentUser) {
+            showInfo(
+                "Look up a user first."
             );
             return;
         }
 
         const id =
             firstDefined(
-                user.id,
-                user.userId
+                state.currentUser.id,
+                state.currentUser.userId
             );
 
-        const username =
-            user.username || id;
+        if (!id) {
+            showError(
+                "The backend did not return the user identifier."
+            );
+            return;
+        }
 
-        openConfirmModal({
-            title: "Delete user?",
-            eyebrow: "User management",
-            body:
-                `This will permanently delete user "${username}".`,
-            confirmText: "Delete user",
-            async onConfirm() {
+        await deleteUserById(
+            id
+        );
+    }
+
+    async function deleteUserById(
+        id
+    ) {
+        await openConfirmModal(
+            "Delete user",
+            "This will deactivate the selected user.",
+            async () => {
                 const result =
                     await apiRequest(
-                        `${ENDPOINTS.users}/${encodeURIComponent(id)}`,
+                        `${ENDPOINTS.users}/${encodeURIComponent(
+                            id
+                        )}`,
                         {
                             method: "DELETE"
                         }
                     );
 
                 showSuccess(
-                    responseSuccessMessage(result)
+                    responseSuccessMessage(
+                        result
+                    )
                 );
 
-                state.currentUser = null;
+                state.currentUser =
+                    null;
 
                 hide(
                     $("user-detail-card")
@@ -2014,8 +2175,10 @@
                 hide(
                     $("admin-user-edit-panel")
                 );
+
+                await loadAdminCustomers();
             }
-        });
+        );
     }
 
 
@@ -2023,9 +2186,11 @@
        ADMIN METERS
        ========================================================= */
 
-    async function loadAdminMeters(
-        overviewOnly = false
-    ) {
+    async function loadAdminMeters() {
+        if (!isAdmin()) {
+            return [];
+        }
+
         const result =
             await apiRequest(
                 ENDPOINTS.meters,
@@ -2034,135 +2199,136 @@
                 }
             );
 
-        const data =
-            responseData(result);
-
-        const meters =
-            arrayFrom(data);
-
         state.adminMeters =
-            meters;
+            arrayFrom(
+                responseData(result)
+            );
 
         renderAdminMeters(
-            meters,
-            overviewOnly
+            state.adminMeters
+        );
+
+        populateAssignmentMeterSelects(
+            state.adminMeters
         );
 
         setText(
             "admin-meter-count",
-            meters.length
+            state.adminMeters.length
         );
 
-        if (!overviewOnly) {
-            await loadAdminPlansIntoSelects();
-        }
+        return state.adminMeters;
+    }
 
-        return meters;
+    function populateAssignmentMeterSelects(
+        meters
+    ) {
+        const selects = [
+            $("assignment-meter-id"),
+            $("unassignment-meter-id")
+        ];
+
+        selects.forEach(
+            (select) => {
+                if (!select) {
+                    return;
+                }
+
+                const current =
+                    select.value;
+
+                select.innerHTML = `
+                    <option value="">
+                        Select water meter
+                    </option>
+                `;
+
+                meters.forEach(
+                    (meter) => {
+                        const id =
+                            meterId(meter);
+
+                        if (!id) {
+                            return;
+                        }
+
+                        const option =
+                            document.createElement(
+                                "option"
+                            );
+
+                        /*
+                         * UUID stays internal.
+                         */
+                        option.value =
+                            String(id);
+
+                        /*
+                         * User sees meter number only.
+                         */
+                        option.textContent =
+                            meterNumber(
+                                meter
+                            );
+
+                        select.appendChild(
+                            option
+                        );
+                    }
+                );
+
+                if (current) {
+                    select.value =
+                        current;
+                }
+            }
+        );
     }
 
     function renderAdminMeters(
-        meters,
-        overviewOnly = false
+        meters
     ) {
-        const overviewBody =
-            $("admin-overview-meters");
-
-        const tableBody =
+        const body =
             $("admin-meters-table");
 
-        if (overviewBody) {
-            if (!meters.length) {
-                overviewBody.innerHTML =
-                    emptyRow(
-                        3,
-                        "No water meters found."
-                    );
-            } else {
-                overviewBody.innerHTML =
-                    meters
-                        .slice(0, 5)
-                        .map((meter) => `
-                            <tr>
-                                <td>
-                                    <strong>
+        const overview =
+            $("admin-overview-meters");
+
+        if (body) {
+            body.innerHTML =
+                meters.length
+                    ? meters
+                        .map(
+                            (meter) => `
+                                <tr>
+                                    <td>
+                                        <strong>
+                                            ${escapeHtml(
+                                                meterNumber(
+                                                    meter
+                                                )
+                                            )}
+                                        </strong>
+                                    </td>
+
+                                    <td>
                                         ${escapeHtml(
-                            meterNumber(meter)
-                        )}
-                                    </strong>
-                                </td>
+                                            planName(
+                                                meter
+                                            )
+                                        )}
+                                    </td>
 
-                                <td>
-                                    ${escapeHtml(
-                            planName(meter)
-                        )}
-                                </td>
-
-                                <td>
-                                    ${escapeHtml(
-                            meterId(meter)
-                        )}
-                                </td>
-                            </tr>
-                        `)
-                        .join("");
-            }
-        }
-
-        if (
-            tableBody &&
-            !overviewOnly
-        ) {
-            if (!meters.length) {
-                tableBody.innerHTML =
-                    emptyRow(
-                        4,
-                        "No water meters found."
-                    );
-            } else {
-                tableBody.innerHTML =
-                    meters
-                        .map((meter) => `
-                            <tr>
-                                <td>
-                                    ${escapeHtml(
-                            meterId(meter)
-                        )}
-                                </td>
-
-                                <td>
-                                    <strong>
-                                        ${escapeHtml(
-                            meterNumber(meter)
-                        )}
-                                    </strong>
-                                </td>
-
-                                <td>
-                                    ${escapeHtml(
-                            planName(meter)
-                        )}
-                                </td>
-
-                                <td>
-                                    <div class="table-actions">
-
-                                        <button
-                                            type="button"
-                                            class="btn btn-ghost btn-sm"
-                                            data-action="lookup-meter"
-                                            data-meter-id="${escapeHtml(
-                            meterId(meter)
-                        )}">
-                                            View
-                                        </button>
-
+                                    <td>
                                         <button
                                             type="button"
                                             class="btn btn-ghost btn-sm"
                                             data-action="edit-meter"
                                             data-meter-id="${escapeHtml(
-                            meterId(meter)
-                        )}">
+                                                meterId(
+                                                    meter
+                                                )
+                                            )}">
                                             Edit
                                         </button>
 
@@ -2171,22 +2337,176 @@
                                             class="btn btn-danger btn-sm"
                                             data-action="delete-meter"
                                             data-meter-id="${escapeHtml(
-                            meterId(meter)
-                        )}">
+                                                meterId(
+                                                    meter
+                                                )
+                                            )}">
                                             Delete
                                         </button>
+                                    </td>
+                                </tr>
+                            `
+                        )
+                        .join("")
+                    : emptyRow(
+                        3,
+                        "No water meters found."
+                    );
+        }
 
-                                    </div>
-                                </td>
-                            </tr>
-                        `)
-                        .join("");
-            }
+        if (overview) {
+            overview.innerHTML =
+                meters.length
+                    ? meters
+                        .slice(0, 5)
+                        .map(
+                            (meter) => `
+                                <tr>
+                                    <td>
+                                        <strong>
+                                            ${escapeHtml(
+                                                meterNumber(
+                                                    meter
+                                                )
+                                            )}
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            planName(
+                                                meter
+                                            )
+                                        )}
+                                    </td>
+
+                                    <td>
+                                        <span class="badge">
+                                            ${escapeHtml(
+                                                meterAssignmentStatus(
+                                                    meter
+                                                )
+                                            )}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `
+                        )
+                        .join("")
+                    : emptyRow(
+                        3,
+                        "No water meters found."
+                    );
         }
     }
 
-    async function createMeter(event) {
+    function meterAssignmentStatus(
+        meter
+    ) {
+        return firstDefined(
+            meter?.username,
+            meter?.customerUsername,
+            meter?.assignment?.username,
+            meter?.assignedTo?.username,
+            "Available"
+        );
+    }
+
+    async function lookupMeter(
+        event
+    ) {
         event.preventDefault();
+
+        if (!isAdmin()) {
+            showError(
+                "Administrator access is required."
+            );
+            return;
+        }
+
+        const id =
+            $("meter-lookup-id")
+                ?.value
+                .trim();
+
+        if (!id) {
+            showError(
+                "Meter ID is required."
+            );
+            return;
+        }
+
+        await lookupMeterById(
+            id
+        );
+    }
+
+    async function lookupMeterById(
+        id
+    ) {
+        const result =
+            await apiRequest(
+                `${ENDPOINTS.meters}/${encodeURIComponent(
+                    id
+                )}`,
+                {
+                    method: "GET"
+                }
+            );
+
+        const meter =
+            responseData(result);
+
+        state.currentMeter =
+            meter;
+
+        renderMeterDetail(
+            meter
+        );
+    }
+
+    function renderMeterDetail(
+        meter
+    ) {
+        if (!meter) {
+            return;
+        }
+
+        show(
+            $("meter-detail-card")
+        );
+
+        setText(
+            "meter-detail-title",
+            meterNumber(meter)
+        );
+
+        setText(
+            "meter-detail-number",
+            meterNumber(meter)
+        );
+
+        setText(
+            "meter-detail-plan",
+            planName(meter)
+        );
+
+        /*
+         * Deliberately do NOT render meter.id.
+         */
+    }
+
+    async function createMeter(
+        event
+    ) {
+        event.preventDefault();
+
+        if (!isAdmin()) {
+            showError(
+                "Administrator access is required."
+            );
+            return;
+        }
 
         const form =
             event.currentTarget;
@@ -2196,15 +2516,24 @@
                 'button[type="submit"]'
             );
 
-        const payload = {
-            meterNumber:
-                $("create-meter-number")
-                    .value.trim(),
+        const meterNumberValue =
+            $("create-meter-number")
+                ?.value
+                .trim();
 
-            billingPlanId:
+        const billingPlanIdValue =
             $("create-meter-plan")
-                .value
-        };
+                ?.value;
+
+        if (
+            !meterNumberValue ||
+            !billingPlanIdValue
+        ) {
+            showError(
+                "Meter number and billing plan are required."
+            );
+            return;
+        }
 
         setButtonLoading(
             button,
@@ -2218,22 +2547,26 @@
                     ENDPOINTS.meters,
                     {
                         method: "POST",
-                        body: JSON.stringify(
-                            payload
-                        )
+                        body:
+                            JSON.stringify({
+                                meterNumber:
+                                    meterNumberValue,
+                                billingPlanId:
+                                    billingPlanIdValue
+                            })
                     }
                 );
 
             showSuccess(
-                responseSuccessMessage(result)
+                responseSuccessMessage(
+                    result
+                )
             );
 
             form.reset();
 
             await loadAdminMeters();
 
-        } catch (error) {
-            // Error already displayed.
         } finally {
             setButtonLoading(
                 button,
@@ -2242,153 +2575,121 @@
         }
     }
 
-    async function lookupMeter(event) {
-        event.preventDefault();
-
-        const id =
-            $("meter-lookup-id")
-                .value.trim();
-
-        if (!id) {
-            showError(
-                "Meter ID is required."
+    function editCurrentMeter() {
+        if (!state.currentMeter) {
+            showInfo(
+                "Look up a meter first."
             );
             return;
         }
 
-        await lookupMeterById(id);
-    }
-
-    async function lookupMeterById(id) {
-        try {
-            const result =
-                await apiRequest(
-                    `${ENDPOINTS.meters}/${encodeURIComponent(id)}`,
-                    {
-                        method: "GET"
-                    }
-                );
-
-            const meter =
-                responseData(result);
-
-            state.currentMeter =
-                meter;
-
-            renderMeterDetail(meter);
-
-            showSuccess(
-                responseSuccessMessage(result)
-            );
-
-            return meter;
-
-        } catch (error) {
-            hide(
-                $("meter-detail-card")
-            );
-        }
-    }
-
-    function renderMeterDetail(meter) {
-        if (!meter) return;
-
-        show($("meter-detail-card"));
-
-        setText(
-            "meter-detail-title",
-            firstDefined(
-                meterNumber(meter),
-                "Water Meter"
+        editMeterById(
+            meterId(
+                state.currentMeter
             )
         );
-
-        setText(
-            "meter-detail-id",
-            meterId(meter)
-        );
-
-        setText(
-            "meter-detail-number",
-            meterNumber(meter)
-        );
-
-        setText(
-            "meter-detail-plan",
-            planName(meter)
-        );
     }
 
-    async function editMeterById(id) {
+    async function editMeterById(
+        id
+    ) {
+        if (!id) {
+            showError(
+                "The backend did not return the meter identifier."
+            );
+            return;
+        }
+
         const meter =
             state.adminMeters.find(
                 (item) =>
-                    String(meterId(item)) ===
-                    String(id)
+                    String(
+                        meterId(item)
+                    ) === String(id)
             );
 
-        let selected =
-            meter;
+        if (meter) {
+            state.currentMeter =
+                meter;
 
-        if (!selected) {
-            selected =
+            $("edit-meter-id").value =
+                id;
+
+            $("edit-meter-number").value =
+                meterNumber(meter);
+
+            $("edit-meter-plan").value =
+                billingPlanId(meter) ||
+                "";
+        } else {
+            try {
                 await lookupMeterById(
                     id
                 );
+
+                const current =
+                    state.currentMeter;
+
+                if (!current) {
+                    return;
+                }
+
+                $("edit-meter-id").value =
+                    id;
+
+                $("edit-meter-number").value =
+                    meterNumber(current);
+
+                $("edit-meter-plan").value =
+                    billingPlanId(current) ||
+                    "";
+            } catch {
+                return;
+            }
         }
 
-        if (!selected) return;
-
-        state.currentMeter =
-            selected;
-
-        $("edit-meter-id").value =
-            meterId(selected);
-
-        $("edit-meter-number").value =
-            meterNumber(selected);
-
-        const planId =
-            billingPlanId(selected);
-
-        $("edit-meter-plan").value =
-            planId || "";
+        await loadAdminPlansIntoSelects();
 
         show(
             $("admin-meter-edit-panel")
         );
-
-        $("admin-meter-edit-panel")
-            .scrollIntoView({
-                behavior: "smooth",
-                block: "start"
-            });
     }
 
-    async function updateMeter(event) {
+    async function updateMeter(
+        event
+    ) {
         event.preventDefault();
-
-        const form =
-            event.currentTarget;
-
-        const button =
-            form.querySelector(
-                'button[type="submit"]'
-            );
 
         const id =
             $("edit-meter-id")
-                .value.trim();
+                ?.value
+                .trim();
 
-        const payload = {
-            meterNumber:
-                $("edit-meter-number")
-                    .value.trim(),
+        const meterNumberValue =
+            $("edit-meter-number")
+                ?.value
+                .trim();
 
-            billingPlanId:
+        const billingPlanIdValue =
             $("edit-meter-plan")
-                .value
-        };
+                ?.value;
+
+        if (
+            !id ||
+            !meterNumberValue ||
+            !billingPlanIdValue
+        ) {
+            showError(
+                "Meter number and billing plan are required."
+            );
+            return;
+        }
+
+        const button =
+            event.currentTarget
+                .querySelector(
+                    'button[type="submit"]'
+                );
 
         setButtonLoading(
             button,
@@ -2399,17 +2700,25 @@
         try {
             const result =
                 await apiRequest(
-                    `${ENDPOINTS.meters}/${encodeURIComponent(id)}`,
+                    `${ENDPOINTS.meters}/${encodeURIComponent(
+                        id
+                    )}`,
                     {
                         method: "PUT",
-                        body: JSON.stringify(
-                            payload
-                        )
+                        body:
+                            JSON.stringify({
+                                meterNumber:
+                                    meterNumberValue,
+                                billingPlanId:
+                                    billingPlanIdValue
+                            })
                     }
                 );
 
             showSuccess(
-                responseSuccessMessage(result)
+                responseSuccessMessage(
+                    result
+                )
             );
 
             hide(
@@ -2418,8 +2727,6 @@
 
             await loadAdminMeters();
 
-        } catch (error) {
-            // Error already displayed.
         } finally {
             setButtonLoading(
                 button,
@@ -2428,234 +2735,47 @@
         }
     }
 
-    async function deleteMeterById(id) {
-        openConfirmModal({
-            title: "Delete water meter?",
-            eyebrow: "Meter management",
-            body:
-                `This will permanently delete meter "${id}".`,
-            confirmText: "Delete meter",
-            async onConfirm() {
+    async function deleteMeterById(
+        id
+    ) {
+        if (!id) {
+            return;
+        }
+
+        await openConfirmModal(
+            "Delete water meter",
+            "This will deactivate the selected water meter.",
+            async () => {
                 const result =
                     await apiRequest(
-                        `${ENDPOINTS.meters}/${encodeURIComponent(id)}`,
+                        `${ENDPOINTS.meters}/${encodeURIComponent(
+                            id
+                        )}`,
                         {
                             method: "DELETE"
                         }
                     );
 
                 showSuccess(
-                    responseSuccessMessage(result)
+                    responseSuccessMessage(
+                        result
+                    )
                 );
+
+                state.currentMeter =
+                    null;
 
                 hide(
                     $("meter-detail-card")
                 );
 
+                hide(
+                    $("admin-meter-edit-panel")
+                );
+
                 await loadAdminMeters();
             }
-        });
-    }
-
-
-    /* =========================================================
-       ADMIN PLAN SELECTS
-       ========================================================= */
-
-    async function loadAdminPlansIntoSelects() {
-        if (!isAdmin()) return;
-
-        let plans =
-            state.plans;
-
-        if (!plans.length) {
-            try {
-                const result =
-                    await apiRequest(
-                        ENDPOINTS.plans,
-                        {
-                            method: "GET"
-                        }
-                    );
-
-                plans =
-                    arrayFrom(
-                        responseData(result)
-                    );
-
-                state.plans =
-                    plans;
-            } catch {
-                return;
-            }
-        }
-
-        populatePlanSelect(
-            $("create-meter-plan"),
-            plans
         );
-
-        populatePlanSelect(
-            $("edit-meter-plan"),
-            plans
-        );
-    }
-
-    function populatePlanSelect(
-        select,
-        plans
-    ) {
-        if (!select) return;
-
-        const selected =
-            select.value;
-
-        const placeholder =
-            select.id === "edit-meter-plan"
-                ? "Select billing plan"
-                : "Select billing plan";
-
-        select.innerHTML =
-            `<option value="">${placeholder}</option>`;
-
-        plans.forEach((plan) => {
-            const id =
-                planId(plan);
-
-            if (!id) return;
-
-            const option =
-                document.createElement("option");
-
-            option.value = id;
-
-            option.textContent =
-                `${plan.name || "Plan"} (${plan.code || id})`;
-
-            select.appendChild(option);
-        });
-
-        if (selected) {
-            select.value = selected;
-        }
-    }
-
-
-    /* =========================================================
-       ADMIN ASSIGNMENTS
-       ========================================================= */
-
-    async function assignMeter(event) {
-        event.preventDefault();
-
-        const form =
-            event.currentTarget;
-
-        const button =
-            form.querySelector(
-                'button[type="submit"]'
-            );
-
-        const payload = {
-            waterMeterId:
-                $("assignment-meter-id")
-                    .value.trim(),
-
-            userId:
-                $("assignment-user-id")
-                    .value.trim()
-        };
-
-        setButtonLoading(
-            button,
-            true,
-            "Assigning..."
-        );
-
-        try {
-            const result =
-                await apiRequest(
-                    ENDPOINTS.assignments,
-                    {
-                        method: "POST",
-                        body: JSON.stringify(
-                            payload
-                        )
-                    }
-                );
-
-            showSuccess(
-                responseSuccessMessage(result)
-            );
-
-            form.reset();
-
-            await loadAdminMeters();
-
-        } catch (error) {
-            // Error already displayed.
-        } finally {
-            setButtonLoading(
-                button,
-                false
-            );
-        }
-    }
-
-    async function unassignMeter(event) {
-        event.preventDefault();
-
-        const form =
-            event.currentTarget;
-
-        const button =
-            form.querySelector(
-                'button[type="submit"]'
-            );
-
-        const meterIdValue =
-            $("unassignment-meter-id")
-                .value.trim();
-
-        const userIdValue =
-            $("unassignment-user-id")
-                .value.trim();
-
-        setButtonLoading(
-            button,
-            true,
-            "Unassigning..."
-        );
-
-        try {
-            const result =
-                await apiRequest(
-                    `${ENDPOINTS.assignments}?waterMeterId=${encodeURIComponent(
-                        meterIdValue
-                    )}&userId=${encodeURIComponent(
-                        userIdValue
-                    )}`,
-                    {
-                        method: "DELETE"
-                    }
-                );
-
-            showSuccess(
-                responseSuccessMessage(result)
-            );
-
-            form.reset();
-
-            await loadAdminMeters();
-
-        } catch (error) {
-            // Error already displayed.
-        } finally {
-            setButtonLoading(
-                button,
-                false
-            );
-        }
     }
 
 
@@ -2663,9 +2783,11 @@
        ADMIN BILLING PLANS
        ========================================================= */
 
-    async function loadAdminPlans(
-        overviewOnly = false
-    ) {
+    async function loadAdminPlans() {
+        if (!isAdmin()) {
+            return [];
+        }
+
         const result =
             await apiRequest(
                 ENDPOINTS.plans,
@@ -2674,161 +2796,167 @@
                 }
             );
 
-        const data =
-            responseData(result);
-
-        const plans =
-            arrayFrom(data);
-
         state.plans =
-            plans;
+            arrayFrom(
+                responseData(result)
+            );
 
         renderAdminPlans(
-            plans,
-            overviewOnly
+            state.plans
         );
 
         setText(
             "admin-plan-count",
-            plans.length
+            state.plans.length
         );
 
-        await loadAdminPlansIntoSelects();
+        populatePlanSelects(
+            state.plans
+        );
 
-        return plans;
+        return state.plans;
+    }
+
+    async function loadAdminPlansIntoSelects() {
+        if (!state.plans.length) {
+            await loadAdminPlans();
+        } else {
+            populatePlanSelects(
+                state.plans
+            );
+        }
+    }
+
+    function populatePlanSelects(
+        plans
+    ) {
+        const selects = [
+            $("create-meter-plan"),
+            $("edit-meter-plan")
+        ];
+
+        selects.forEach(
+            (select) => {
+                if (!select) {
+                    return;
+                }
+
+                const current =
+                    select.value;
+
+                select.innerHTML = `
+                    <option value="">
+                        Select billing plan
+                    </option>
+                `;
+
+                plans.forEach(
+                    (plan) => {
+                        const id =
+                            planId(plan);
+
+                        if (!id) {
+                            return;
+                        }
+
+                        const option =
+                            document.createElement(
+                                "option"
+                            );
+
+                        option.value =
+                            String(id);
+
+                        option.textContent =
+                            firstDefined(
+                                plan?.name,
+                                plan?.code,
+                                "Billing Plan"
+                            );
+
+                        select.appendChild(
+                            option
+                        );
+                    }
+                );
+
+                if (current) {
+                    select.value =
+                        current;
+                }
+            }
+        );
     }
 
     function renderAdminPlans(
-        plans,
-        overviewOnly = false
+        plans
     ) {
-        const overviewBody =
-            $("admin-overview-plans");
-
-        const tableBody =
+        const body =
             $("admin-plans-table");
 
-        if (overviewBody) {
-            if (!plans.length) {
-                overviewBody.innerHTML =
-                    emptyRow(
-                        3,
-                        "No billing plans found."
-                    );
-            } else {
-                overviewBody.innerHTML =
-                    plans
-                        .slice(0, 5)
-                        .map((plan) => `
-                            <tr>
-                                <td>
-                                    <strong>
+        const overview =
+            $("admin-overview-plans");
+
+        if (body) {
+            body.innerHTML =
+                plans.length
+                    ? plans
+                        .map(
+                            (plan) => `
+                                <tr>
+                                    <td>
+                                        <strong>
+                                            ${escapeHtml(
+                                                planNameFromPlan(
+                                                    plan
+                                                )
+                                            )}
+                                        </strong>
+                                    </td>
+
+                                    <td>
                                         ${escapeHtml(
-                            plan.name
-                        )}
-                                    </strong>
-                                </td>
+                                            firstDefined(
+                                                plan?.code,
+                                                "—"
+                                            )
+                                        )}
+                                    </td>
 
-                                <td>
-                                    ${escapeHtml(
-                            plan.code
-                        )}
-                                </td>
-
-                                <td>
-                                    <span class="badge">
+                                    <td>
                                         ${escapeHtml(
-                            plan.planType
-                        )}
-                                    </span>
-                                </td>
-                            </tr>
-                        `)
-                        .join("");
-            }
-        }
+                                            firstDefined(
+                                                plan?.type,
+                                                plan?.planType,
+                                                "—"
+                                            )
+                                        )}
+                                    </td>
 
-        if (
-            tableBody &&
-            !overviewOnly
-        ) {
-            if (!plans.length) {
-                tableBody.innerHTML =
-                    emptyRow(
-                        7,
-                        "No billing plans found."
-                    );
-            } else {
-                tableBody.innerHTML =
-                    plans
-                        .map((plan) => `
-                            <tr>
-                                <td>
-                                    ${escapeHtml(
-                            planId(plan)
-                        )}
-                                </td>
-
-                                <td>
-                                    <strong>
+                                    <td>
                                         ${escapeHtml(
-                            plan.name
-                        )}
-                                    </strong>
-                                </td>
+                                            planPriceDisplay(
+                                                plan
+                                            )
+                                        )}
+                                    </td>
 
-                                <td>
-                                    ${escapeHtml(
-                            plan.code
-                        )}
-                                </td>
-
-                                <td>
-                                    <span class="badge">
+                                    <td>
                                         ${escapeHtml(
-                            plan.planType
-                        )}
-                                    </span>
-                                </td>
+                                            slabCount(
+                                                plan
+                                            )
+                                        )}
+                                    </td>
 
-                                <td>
-                                    ${
-                            plan.planType === "FIXED"
-                                ? escapeHtml(
-                                    formatCurrency(
-                                        plan.pricePerUnit
-                                    )
-                                )
-                                : "—"
-                        }
-                                </td>
-
-                                <td>
-                                    ${
-                            plan.planType === "SLAB"
-                                ? escapeHtml(
-                                    String(
-                                        Array.isArray(
-                                            plan.slabs
-                                        )
-                                            ? plan.slabs.length
-                                            : 0
-                                    )
-                                )
-                                : "—"
-                        }
-                                </td>
-
-                                <td>
-                                    <div class="table-actions">
-
+                                    <td>
                                         <button
                                             type="button"
                                             class="btn btn-ghost btn-sm"
                                             data-action="edit-plan"
                                             data-plan-id="${escapeHtml(
-                            planId(plan)
-                        )}">
+                                                planId(plan)
+                                            )}">
                                             Edit
                                         </button>
 
@@ -2837,185 +2965,130 @@
                                             class="btn btn-danger btn-sm"
                                             data-action="delete-plan"
                                             data-plan-id="${escapeHtml(
-                            planId(plan)
-                        )}">
+                                                planId(plan)
+                                            )}">
                                             Delete
                                         </button>
+                                    </td>
+                                </tr>
+                            `
+                        )
+                        .join("")
+                    : emptyRow(
+                        6,
+                        "No billing plans found."
+                    );
+        }
 
-                                    </div>
-                                </td>
-                            </tr>
-                        `)
-                        .join("");
-            }
+        if (overview) {
+            overview.innerHTML =
+                plans.length
+                    ? plans
+                        .slice(0, 5)
+                        .map(
+                            (plan) => `
+                                <tr>
+                                    <td>
+                                        <strong>
+                                            ${escapeHtml(
+                                                planNameFromPlan(
+                                                    plan
+                                                )
+                                            )}
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            firstDefined(
+                                                plan?.code,
+                                                "—"
+                                            )
+                                        )}
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            firstDefined(
+                                                plan?.type,
+                                                plan?.planType,
+                                                "—"
+                                            )
+                                        )}
+                                    </td>
+                                </tr>
+                            `
+                        )
+                        .join("")
+                    : emptyRow(
+                        3,
+                        "No billing plans found."
+                    );
         }
     }
 
-    function updatePlanTypeUI(
-        prefix = ""
+    function planNameFromPlan(
+        plan
     ) {
-        const type =
-            $(
-                prefix === "edit"
-                    ? "edit-plan-type"
-                    : "plan-type"
-            )?.value;
+        return firstDefined(
+            plan?.name,
+            plan?.planName,
+            plan?.code,
+            "Billing Plan"
+        );
+    }
 
-        const fixedField =
-            $(
-                prefix === "edit"
-                    ? "edit-fixed-price-field"
-                    : "fixed-price-field"
+    function planPriceDisplay(
+        plan
+    ) {
+        const price =
+            firstDefined(
+                plan?.price,
+                plan?.fixedPrice,
+                plan?.pricePerUnit,
+                plan?.amount
             );
 
-        const slabBuilder =
-            $(
-                prefix === "edit"
-                    ? "edit-slab-builder"
-                    : "slab-builder"
+        if (
+            price !== undefined &&
+            price !== null &&
+            price !== ""
+        ) {
+            return formatCurrency(
+                price
             );
-
-        if (type === "SLAB") {
-            hide(fixedField);
-            show(slabBuilder);
-
-            const rows =
-                $(
-                    prefix === "edit"
-                        ? "edit-slab-rows"
-                        : "slab-rows"
-                );
-
-            if (
-                rows &&
-                !rows.children.length
-            ) {
-                addSlabRow(
-                    prefix === "edit"
-                        ? "edit"
-                        : ""
-                );
-            }
-        } else {
-            show(fixedField);
-            hide(slabBuilder);
         }
+
+        return "Slab";
     }
 
-    function addSlabRow(
-        prefix = ""
+    function slabCount(
+        plan
     ) {
-        const container =
-            $(
-                prefix === "edit"
-                    ? "edit-slab-rows"
-                    : "slab-rows"
+        const slabs =
+            firstDefined(
+                plan?.slabs,
+                plan?.billingSlabs
             );
 
-        if (!container) return;
-
-        const row =
-            document.createElement("div");
-
-        row.className =
-            "slab-row";
-
-        row.innerHTML = `
-            <div class="field">
-                <label>Lower bound</label>
-                <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    class="slab-lower"
-                    placeholder="0">
-            </div>
-
-            <div class="field">
-                <label>Upper bound</label>
-                <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    class="slab-upper"
-                    placeholder="Open-ended">
-            </div>
-
-            <div class="field">
-                <label>Price per unit</label>
-                <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    class="slab-price"
-                    placeholder="10.00"
-                    required>
-            </div>
-
-            <div class="slab-remove">
-                <button
-                    type="button"
-                    class="btn btn-danger btn-sm"
-                    data-action="remove-slab">
-                    Remove
-                </button>
-            </div>
-        `;
-
-        container.appendChild(row);
+        return Array.isArray(
+            slabs
+        )
+            ? slabs.length
+            : 0;
     }
 
-    function collectSlabs(
-        prefix = ""
+    async function createPlan(
+        event
     ) {
-        const container =
-            $(
-                prefix === "edit"
-                    ? "edit-slab-rows"
-                    : "slab-rows"
-            );
-
-        if (!container) return [];
-
-        return Array.from(
-            container.querySelectorAll(
-                ".slab-row"
-            )
-        ).map((row) => {
-            const lower =
-                row.querySelector(
-                    ".slab-lower"
-                )?.value;
-
-            const upper =
-                row.querySelector(
-                    ".slab-upper"
-                )?.value;
-
-            const price =
-                row.querySelector(
-                    ".slab-price"
-                )?.value;
-
-            return {
-                lowerBound:
-                    lower === ""
-                        ? 0
-                        : Number(lower),
-
-                upperBound:
-                    upper === ""
-                        ? null
-                        : Number(upper),
-
-                pricePerUnit:
-                    Number(price)
-            };
-        });
-    }
-
-    async function createPlan(event) {
         event.preventDefault();
+
+        if (!isAdmin()) {
+            showError(
+                "Administrator access is required."
+            );
+            return;
+        }
 
         const form =
             event.currentTarget;
@@ -3025,38 +3098,66 @@
                 'button[type="submit"]'
             );
 
+        const name =
+            $("plan-name")
+                ?.value
+                .trim();
+
+        const code =
+            $("plan-code")
+                ?.value
+                .trim();
+
+        const description =
+            $("plan-description")
+                ?.value
+                .trim();
+
         const type =
-            $("plan-type").value;
+            $("plan-type")
+                ?.value;
+
+        if (
+            !name ||
+            !code ||
+            !type
+        ) {
+            showError(
+                "Plan name, code and type are required."
+            );
+            return;
+        }
 
         const payload = {
-            name:
-                $("plan-name")
-                    .value.trim(),
-
-            code:
-                $("plan-code")
-                    .value.trim(),
-
-            description:
-                $("plan-description")
-                    .value.trim(),
-
-            pricePerUnit:
-                type === "FIXED"
-                    ? parseFloat(
-                        $("plan-price")
-                            .value
-                    )
-                    : null,
-
-            planType:
-            type,
-
-            slabs:
-                type === "SLAB"
-                    ? collectSlabs()
-                    : []
+            name,
+            code,
+            description,
+            type
         };
+
+        if (type === "FIXED") {
+            const price =
+                Number(
+                    $("plan-price")
+                        ?.value
+                );
+
+            if (
+                Number.isNaN(price) ||
+                price < 0
+            ) {
+                showError(
+                    "A valid fixed price is required."
+                );
+                return;
+            }
+
+            payload.price =
+                price;
+        } else {
+            payload.slabs =
+                collectSlabs();
+        }
 
         setButtonLoading(
             button,
@@ -3070,27 +3171,33 @@
                     ENDPOINTS.plans,
                     {
                         method: "POST",
-                        body: JSON.stringify(
-                            payload
-                        )
+                        body:
+                            JSON.stringify(
+                                payload
+                            )
                     }
                 );
 
             showSuccess(
-                responseSuccessMessage(result)
+                responseSuccessMessage(
+                    result
+                )
             );
 
             form.reset();
 
-            $("slab-rows").innerHTML =
-                "";
+            const rows =
+                $("slab-rows");
+
+            if (rows) {
+                rows.innerHTML =
+                    "";
+            }
 
             updatePlanTypeUI();
 
             await loadAdminPlans();
 
-        } catch (error) {
-            // Error already displayed.
         } finally {
             setButtonLoading(
                 button,
@@ -3099,17 +3206,20 @@
         }
     }
 
-    function editPlanById(id) {
+    function editPlanById(
+        id
+    ) {
         const plan =
             state.plans.find(
                 (item) =>
-                    String(planId(item)) ===
-                    String(id)
+                    String(
+                        planId(item)
+                    ) === String(id)
             );
 
         if (!plan) {
             showError(
-                "The selected billing plan could not be found."
+                "Billing plan could not be found."
             );
             return;
         }
@@ -3121,110 +3231,145 @@
             planId(plan);
 
         $("edit-plan-name").value =
-            plan.name || "";
+            firstDefined(
+                plan?.name,
+                plan?.planName,
+                ""
+            );
 
         $("edit-plan-type").value =
-            plan.planType || "FIXED";
+            firstDefined(
+                plan?.type,
+                plan?.planType,
+                "FIXED"
+            );
 
         $("edit-plan-description").value =
-            plan.description || "";
+            firstDefined(
+                plan?.description,
+                ""
+            );
 
         $("edit-plan-price").value =
-            plan.pricePerUnit ??
-            "";
+            firstDefined(
+                plan?.price,
+                plan?.fixedPrice,
+                plan?.pricePerUnit,
+                ""
+            );
 
         const rows =
             $("edit-slab-rows");
 
-        rows.innerHTML =
-            "";
+        if (rows) {
+            rows.innerHTML =
+                "";
 
-        if (
-            plan.planType === "SLAB" &&
-            Array.isArray(plan.slabs)
-        ) {
-            plan.slabs.forEach(
-                (slab) => {
-                    addSlabRow("edit");
+            const slabs =
+                firstDefined(
+                    plan?.slabs,
+                    plan?.billingSlabs
+                );
 
-                    const row =
-                        rows.lastElementChild;
-
-                    row.querySelector(
-                        ".slab-lower"
-                    ).value =
-                        slab.lowerBound ?? 0;
-
-                    row.querySelector(
-                        ".slab-upper"
-                    ).value =
-                        slab.upperBound ?? "";
-
-                    row.querySelector(
-                        ".slab-price"
-                    ).value =
-                        slab.pricePerUnit ?? "";
-                }
-            );
+            if (Array.isArray(slabs)) {
+                slabs.forEach(
+                    (slab) => {
+                        addSlabRow(
+                            "edit",
+                            slab
+                        );
+                    }
+                );
+            }
         }
+
+        updatePlanTypeUI(
+            "edit"
+        );
 
         show(
             $("admin-plan-edit-panel")
         );
-
-        updatePlanTypeUI("edit");
-
-        $("admin-plan-edit-panel")
-            .scrollIntoView({
-                behavior: "smooth",
-                block: "start"
-            });
     }
 
-    async function updatePlan(event) {
+    async function updatePlan(
+        event
+    ) {
         event.preventDefault();
-
-        const form =
-            event.currentTarget;
-
-        const button =
-            form.querySelector(
-                'button[type="submit"]'
-            );
 
         const id =
             $("edit-plan-id")
-                .value.trim();
+                ?.value
+                .trim();
+
+        if (!id) {
+            showError(
+                "Billing plan identifier is missing."
+            );
+            return;
+        }
+
+        const name =
+            $("edit-plan-name")
+                ?.value
+                .trim();
+
+        const description =
+            $("edit-plan-description")
+                ?.value
+                .trim();
 
         const type =
             $("edit-plan-type")
-                .value;
+                ?.value;
+
+        if (
+            !name ||
+            !type
+        ) {
+            showError(
+                "Plan name and type are required."
+            );
+            return;
+        }
 
         const payload = {
-            name:
-                $("edit-plan-name")
-                    .value.trim(),
-
-            description:
-                $("edit-plan-description")
-                    .value.trim(),
-
-            planType:
-            type,
-
-            pricePerUnit:
-                type === "FIXED"
-                    ? parseFloat(
-                        $("edit-plan-price")
-                            .value
-                    )
-                    : null,
-
-            slabs:
-                type === "SLAB"
-                    ? collectSlabs("edit")
-                    : []
+            name,
+            description,
+            type
         };
+
+        if (type === "FIXED") {
+            const price =
+                Number(
+                    $("edit-plan-price")
+                        ?.value
+                );
+
+            if (
+                Number.isNaN(price) ||
+                price < 0
+            ) {
+                showError(
+                    "A valid fixed price is required."
+                );
+                return;
+            }
+
+            payload.price =
+                price;
+        } else {
+            payload.slabs =
+                collectSlabs(
+                    "edit"
+                );
+        }
+
+        const button =
+            event.currentTarget
+                .querySelector(
+                    'button[type="submit"]'
+                );
 
         setButtonLoading(
             button,
@@ -3235,17 +3380,22 @@
         try {
             const result =
                 await apiRequest(
-                    `${ENDPOINTS.plans}/${encodeURIComponent(id)}`,
+                    `${ENDPOINTS.plans}/${encodeURIComponent(
+                        id
+                    )}`,
                     {
                         method: "PUT",
-                        body: JSON.stringify(
-                            payload
-                        )
+                        body:
+                            JSON.stringify(
+                                payload
+                            )
                     }
                 );
 
             showSuccess(
-                responseSuccessMessage(result)
+                responseSuccessMessage(
+                    result
+                )
             );
 
             hide(
@@ -3254,8 +3404,6 @@
 
             await loadAdminPlans();
 
-        } catch (error) {
-            // Error already displayed.
         } finally {
             setButtonLoading(
                 button,
@@ -3264,40 +3412,378 @@
         }
     }
 
-    async function deletePlanById(id) {
-        const plan =
-            state.plans.find(
-                (item) =>
-                    String(planId(item)) ===
-                    String(id)
-            );
+    async function deletePlanById(
+        id
+    ) {
+        if (!id) {
+            return;
+        }
 
-        const name =
-            plan?.name ||
-            id;
-
-        openConfirmModal({
-            title: "Delete billing plan?",
-            eyebrow: "Billing plans",
-            body:
-                `This will permanently delete "${name}".`,
-            confirmText: "Delete plan",
-            async onConfirm() {
+        await openConfirmModal(
+            "Delete billing plan",
+            "This will deactivate the selected billing plan.",
+            async () => {
                 const result =
                     await apiRequest(
-                        `${ENDPOINTS.plans}/${encodeURIComponent(id)}`,
+                        `${ENDPOINTS.plans}/${encodeURIComponent(
+                            id
+                        )}`,
                         {
                             method: "DELETE"
                         }
                     );
 
                 showSuccess(
-                    responseSuccessMessage(result)
+                    responseSuccessMessage(
+                        result
+                    )
                 );
 
                 await loadAdminPlans();
             }
-        });
+        );
+    }
+
+
+    /* =========================================================
+       SLAB UI
+       ========================================================= */
+
+    function updatePlanTypeUI(
+        mode = ""
+    ) {
+        const suffix =
+            mode === "edit"
+                ? "edit-"
+                : "";
+
+        const typeId =
+            `${suffix}plan-type`;
+
+        const type =
+            $(typeId)?.value;
+
+        const priceField =
+            $(
+                `${suffix}fixed-price-field`
+            );
+
+        const slabBuilder =
+            $(
+                `${suffix}slab-builder`
+            );
+
+        if (type === "SLAB") {
+            hide(priceField);
+            show(slabBuilder);
+        } else {
+            show(priceField);
+            hide(slabBuilder);
+        }
+    }
+
+    function addSlabRow(
+        mode = "",
+        slab = null
+    ) {
+        const container =
+            mode === "edit"
+                ? $("edit-slab-rows")
+                : $("slab-rows");
+
+        if (!container) {
+            return;
+        }
+
+        const row =
+            document.createElement(
+                "div"
+            );
+
+        row.className =
+            "slab-row";
+
+        row.innerHTML = `
+            <div class="field">
+                <label>
+                    From
+                </label>
+
+                <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    data-slab-from
+                    value="${escapeHtml(
+                        firstDefined(
+                            slab?.from,
+                            slab?.minUnits,
+                            ""
+                        )
+                    )}"
+                    required>
+            </div>
+
+            <div class="field">
+                <label>
+                    To
+                </label>
+
+                <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    data-slab-to
+                    value="${escapeHtml(
+                        firstDefined(
+                            slab?.to,
+                            slab?.maxUnits,
+                            ""
+                        )
+                    )}">
+            </div>
+
+            <div class="field">
+                <label>
+                    Rate
+                </label>
+
+                <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    data-slab-rate
+                    value="${escapeHtml(
+                        firstDefined(
+                            slab?.rate,
+                            slab?.price,
+                            slab?.pricePerUnit,
+                            ""
+                        )
+                    )}"
+                    required>
+            </div>
+
+            <button
+                type="button"
+                class="btn btn-danger btn-sm slab-remove"
+                data-action="remove-slab">
+                Remove
+            </button>
+        `;
+
+        container.appendChild(
+            row
+        );
+    }
+
+    function collectSlabs(
+        mode = ""
+    ) {
+        const container =
+            mode === "edit"
+                ? $("edit-slab-rows")
+                : $("slab-rows");
+
+        if (!container) {
+            return [];
+        }
+
+        return $$(`
+            #${container.id} .slab-row
+        `).map(
+            (row) => {
+                const from =
+                    Number(
+                        row.querySelector(
+                            "[data-slab-from]"
+                        )?.value
+                    );
+
+                const toValue =
+                    row.querySelector(
+                        "[data-slab-to]"
+                    )?.value;
+
+                const rate =
+                    Number(
+                        row.querySelector(
+                            "[data-slab-rate]"
+                        )?.value
+                    );
+
+                return {
+                    from,
+                    to:
+                        toValue === ""
+                            ? null
+                            : Number(
+                                toValue
+                            ),
+                    rate
+                };
+            }
+        );
+    }
+
+
+    /* =========================================================
+       ADMIN ASSIGNMENTS
+       ========================================================= */
+
+    async function assignMeter(
+        event
+    ) {
+        event.preventDefault();
+
+        if (!isAdmin()) {
+            showError(
+                "Administrator access is required."
+            );
+            return;
+        }
+
+        const meterIdValue =
+            $("assignment-meter-id")
+                ?.value;
+
+        const userIdValue =
+            $("assignment-user-id")
+                ?.value;
+
+        if (
+            !meterIdValue ||
+            !userIdValue
+        ) {
+            showError(
+                "Water meter and customer are required."
+            );
+            return;
+        }
+
+        const button =
+            event.currentTarget
+                .querySelector(
+                    'button[type="submit"]'
+                );
+
+        setButtonLoading(
+            button,
+            true,
+            "Assigning..."
+        );
+
+        try {
+            const result =
+                await apiRequest(
+                    ENDPOINTS.assignments,
+                    {
+                        method: "POST",
+                        body:
+                            JSON.stringify({
+                                waterMeterId:
+                                    meterIdValue,
+                                userId:
+                                    userIdValue
+                            })
+                    }
+                );
+
+            showSuccess(
+                responseSuccessMessage(
+                    result
+                )
+            );
+
+            event.currentTarget.reset();
+
+            await Promise.all([
+                loadAdminMeters(),
+                loadAdminCustomers()
+            ]);
+
+        } finally {
+            setButtonLoading(
+                button,
+                false
+            );
+        }
+    }
+
+    async function unassignMeter(
+        event
+    ) {
+        event.preventDefault();
+
+        if (!isAdmin()) {
+            showError(
+                "Administrator access is required."
+            );
+            return;
+        }
+
+        const meterIdValue =
+            $("unassignment-meter-id")
+                ?.value;
+
+        const userIdValue =
+            $("unassignment-user-id")
+                ?.value;
+
+        if (
+            !meterIdValue ||
+            !userIdValue
+        ) {
+            showError(
+                "Water meter and customer are required."
+            );
+            return;
+        }
+
+        const button =
+            event.currentTarget
+                .querySelector(
+                    'button[type="submit"]'
+                );
+
+        setButtonLoading(
+            button,
+            true,
+            "Removing..."
+        );
+
+        try {
+            const result =
+                await apiRequest(
+                    ENDPOINTS.assignments,
+                    {
+                        method: "DELETE",
+                        body:
+                            JSON.stringify({
+                                waterMeterId:
+                                    meterIdValue,
+                                userId:
+                                    userIdValue
+                            })
+                    }
+                );
+
+            showSuccess(
+                responseSuccessMessage(
+                    result
+                )
+            );
+
+            event.currentTarget.reset();
+
+            await loadAdminMeters();
+
+        } finally {
+            setButtonLoading(
+                button,
+                false
+            );
+        }
     }
 
 
@@ -3305,9 +3791,11 @@
        ADMIN INVOICES
        ========================================================= */
 
-    async function loadAdminInvoices(
-        overviewOnly = false
-    ) {
+    async function loadAdminInvoices() {
+        if (!isAdmin()) {
+            return [];
+        }
+
         const result =
             await apiRequest(
                 ENDPOINTS.invoices,
@@ -3316,116 +3804,284 @@
                 }
             );
 
-        const data =
-            responseData(result);
-
-        const invoices =
-            arrayFrom(data);
-
         state.invoices =
-            invoices;
+            arrayFrom(
+                responseData(result)
+            );
 
         renderAdminInvoices(
-            invoices,
-            overviewOnly
+            state.invoices
         );
 
         setText(
             "admin-invoice-count",
-            invoices.length
+            state.invoices.length
         );
 
-        return invoices;
+        return state.invoices;
     }
 
     function renderAdminInvoices(
-        invoices,
-        overviewOnly = false
+        invoices
     ) {
-        const tableBody =
+        const overview =
+            $("admin-overview-invoices");
+
+        const body =
             $("admin-invoices-table");
-
-        if (!tableBody) return;
-
-        if (!invoices.length) {
-            tableBody.innerHTML =
-                emptyRow(
-                    6,
-                    "No invoices found."
-                );
-            return;
-        }
 
         const sorted =
             [...invoices].sort(
                 compareInvoicesDescending
             );
 
-        tableBody.innerHTML =
-            sorted
-                .map((invoice) => `
-                    <tr>
-                        <td>
-                            <strong>
-                                ${escapeHtml(
-                    invoiceId(invoice)
-                )}
-                            </strong>
-                        </td>
+        const rows =
+            sorted.length
+                ? sorted
+                    .map(
+                        (invoice) => `
+                            <tr>
+                                <td>
+                                    <strong>
+                                        Invoice
+                                    </strong>
+                                </td>
 
-                        <td>
-                            ${escapeHtml(
-                    customerName(invoice)
-                )}
-                        </td>
+                                <td>
+                                    ${escapeHtml(
+                                        customerName(
+                                            invoice
+                                        )
+                                    )}
+                                </td>
 
-                        <td>
-                            ${escapeHtml(
-                    invoiceMeter(invoice)
-                )}
-                        </td>
+                                <td>
+                                    ${escapeHtml(
+                                        invoiceMeter(
+                                            invoice
+                                        )
+                                    )}
+                                </td>
 
-                        <td>
-                            ${escapeHtml(
-                    invoicePeriod(invoice)
-                )}
-                        </td>
+                                <td>
+                                    ${escapeHtml(
+                                        invoicePeriod(
+                                            invoice
+                                        )
+                                    )}
+                                </td>
 
-                        <td>
-                            <strong>
-                                ${escapeHtml(
-                    formatCurrency(
-                        invoiceAmount(
-                            invoice
+                                <td>
+                                    <strong>
+                                        ${escapeHtml(
+                                            formatCurrency(
+                                                invoiceAmount(
+                                                    invoice
+                                                )
+                                            )
+                                        )}
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    <span class="badge">
+                                        ${escapeHtml(
+                                            invoiceStatus(
+                                                invoice
+                                            )
+                                        )}
+                                    </span>
+                                </td>
+                            </tr>
+                        `
+                    )
+                    .join("")
+                : emptyRow(
+                    6,
+                    "No invoices found."
+                );
+
+        if (body) {
+            body.innerHTML =
+                rows;
+        }
+
+        if (overview) {
+            overview.innerHTML =
+                sorted.length
+                    ? sorted
+                        .slice(0, 5)
+                        .map(
+                            (invoice) => `
+                                <tr>
+                                    <td>
+                                        <strong>
+                                            Invoice
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            customerName(
+                                                invoice
+                                            )
+                                        )}
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            invoiceMeter(
+                                                invoice
+                                            )
+                                        )}
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            invoicePeriod(
+                                                invoice
+                                            )
+                                        )}
+                                    </td>
+
+                                    <td>
+                                        <strong>
+                                            ${escapeHtml(
+                                                formatCurrency(
+                                                    invoiceAmount(
+                                                        invoice
+                                                    )
+                                                )
+                                            )}
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        <span class="badge">
+                                            ${escapeHtml(
+                                                invoiceStatus(
+                                                    invoice
+                                                )
+                                            )}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `
                         )
-                    )
-                )}
-                            </strong>
-                        </td>
+                        .join("")
+                    : emptyRow(
+                        6,
+                        "No invoices found."
+                    );
+        }
+    }
 
-                        <td>
-                            <span class="badge">
-                                ${escapeHtml(
-                    invoiceStatus(
-                        invoice
-                    )
-                )}
-                            </span>
-                        </td>
-                    </tr>
-                `)
-                .join("");
+    function viewInvoice(
+        id
+    ) {
+        if (!id) {
+            return;
+        }
+
+        const invoice =
+            state.invoices.find(
+                (item) =>
+                    String(
+                        invoiceId(item)
+                    ) === String(id)
+            );
+
+        if (!invoice) {
+            showInfo(
+                "Invoice details are not available."
+            );
+            return;
+        }
+
+        /*
+         * Invoice UUID is deliberately not shown.
+         */
+        openInfoModal(
+            "Invoice",
+            `
+                <div class="detail-list">
+                    <div>
+                        <span>Customer</span>
+                        <strong>
+                            ${escapeHtml(
+                                customerName(
+                                    invoice
+                                )
+                            )}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Meter</span>
+                        <strong>
+                            ${escapeHtml(
+                                invoiceMeter(
+                                    invoice
+                                )
+                            )}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Period</span>
+                        <strong>
+                            ${escapeHtml(
+                                invoicePeriod(
+                                    invoice
+                                )
+                            )}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Amount</span>
+                        <strong>
+                            ${escapeHtml(
+                                formatCurrency(
+                                    invoiceAmount(
+                                        invoice
+                                    )
+                                )
+                            )}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Status</span>
+                        <strong>
+                            ${escapeHtml(
+                                invoiceStatus(
+                                    invoice
+                                )
+                            )}
+                        </strong>
+                    </div>
+                </div>
+            `
+        );
     }
 
 
     /* =========================================================
-       ADMIN BILLING JOB
+       ADMIN BILLING JOBS
        ========================================================= */
 
     async function startAdminBillingJob(
         event
     ) {
         event.preventDefault();
+
+        if (!isAdmin()) {
+            showError(
+                "Administrator access is required."
+            );
+            return;
+        }
 
         const form =
             event.currentTarget;
@@ -3436,18 +4092,26 @@
             );
 
         const year =
-            parseInt(
+            Number(
                 $("admin-billing-year")
-                    .value,
-                10
+                    ?.value
             );
 
         const month =
-            parseInt(
+            Number(
                 $("admin-billing-month")
-                    .value,
-                10
+                    ?.value
             );
+
+        if (
+            !year ||
+            !month
+        ) {
+            showError(
+                "Billing year and month are required."
+            );
+            return;
+        }
 
         setButtonLoading(
             button,
@@ -3461,10 +4125,11 @@
                     ENDPOINTS.adminGenerateInvoice,
                     {
                         method: "POST",
-                        body: JSON.stringify({
-                            year,
-                            month
-                        })
+                        body:
+                            JSON.stringify({
+                                year,
+                                month
+                            })
                     }
                 );
 
@@ -3474,25 +4139,23 @@
             const jobId =
                 firstDefined(
                     data?.jobId,
-                    data?.id,
-                    data?.generationJobId
+                    data?.generationJobId,
+                    data?.id
                 );
 
             showSuccess(
-                responseSuccessMessage(result)
+                responseSuccessMessage(
+                    result
+                )
             );
 
+            /*
+             * Job ID exists only in JS memory.
+             * It is never placed into the DOM.
+             */
             if (jobId) {
                 state.lastJobId =
                     String(jobId);
-
-                sessionStorage.setItem(
-                    STORAGE_KEYS.lastJobId,
-                    state.lastJobId
-                );
-
-                $("job-id").value =
-                    state.lastJobId;
 
                 await checkJobStatus(
                     state.lastJobId
@@ -3505,8 +4168,6 @@
 
             await loadAdminInvoices();
 
-        } catch (error) {
-            // Error already displayed.
         } finally {
             setButtonLoading(
                 button,
@@ -3518,25 +4179,31 @@
     async function checkJobStatus(
         jobId = null
     ) {
+        if (!isAdmin()) {
+            showError(
+                "Administrator access is required."
+            );
+            return null;
+        }
+
         const id =
             jobId ||
-            $("job-id")
-                ?.value.trim();
+            state.lastJobId;
 
         if (!id) {
-            showError(
-                "Job ID is required."
+            showInfo(
+                "No billing job has been started in this session."
             );
-            return;
+
+            return null;
         }
 
         try {
             const result =
                 await apiRequest(
-                    `${ENDPOINTS.adminGenerateInvoice.replace(
-                        "/generate",
-                        ""
-                    )}/generation-jobs/${encodeURIComponent(id)}`,
+                    `/api/admin/invoices/generation-jobs/${encodeURIComponent(
+                        id
+                    )}`,
                     {
                         method: "GET"
                     }
@@ -3546,34 +4213,86 @@
                 responseData(result);
 
             renderJobStatus(
-                id,
                 data
             );
 
-            if (!jobId) {
-                showSuccess(
-                    responseSuccessMessage(result)
-                );
-            }
-
             return data;
 
-        } catch (error) {
-            // Error already displayed.
+        } catch {
+            return null;
         }
     }
 
+    function startJobPolling(
+        jobId
+    ) {
+        if (
+            state.jobPollingTimer
+        ) {
+            clearInterval(
+                state.jobPollingTimer
+            );
+        }
+
+        state.jobPollingTimer =
+            setInterval(
+                async () => {
+                    const data =
+                        await checkJobStatus(
+                            jobId
+                        );
+
+                    if (
+                        isTerminalJobStatus(
+                            data
+                        )
+                    ) {
+                        clearInterval(
+                            state.jobPollingTimer
+                        );
+
+                        state.jobPollingTimer =
+                            null;
+
+                        await loadAdminInvoices();
+                    }
+                },
+                5000
+            );
+    }
+
+    function isTerminalJobStatus(
+        data
+    ) {
+        const status =
+            String(
+                firstDefined(
+                    data?.status,
+                    data?.state,
+                    data?.jobStatus,
+                    ""
+                )
+            ).toUpperCase();
+
+        return [
+            "COMPLETED",
+            "SUCCESS",
+            "FAILED",
+            "ERROR",
+            "CANCELLED",
+            "CANCELED"
+        ].includes(status);
+    }
+
     function renderJobStatus(
-        jobId,
         data
     ) {
         show(
             $("job-status-card")
         );
 
-        setText(
-            "job-status-id",
-            jobId
+        hide(
+            $("job-status-empty")
         );
 
         const status =
@@ -3589,88 +4308,71 @@
             status
         );
 
-        $("job-status-json").textContent =
-            safeJson(data);
+        /*
+         * Backend response is shown after
+         * recursively removing identifier fields.
+         *
+         * This keeps useful backend information
+         * while guaranteeing UUIDs are not rendered.
+         */
+        const displayData =
+            sanitizeJobStatus(
+                data
+            );
+
+        const json =
+            $("job-status-json");
+
+        if (json) {
+            json.textContent =
+                safeJson(
+                    displayData
+                );
+        }
     }
 
-    function startJobPolling(
-        jobId
+    function sanitizeJobStatus(
+        value
     ) {
-        if (state.jobPollingTimer) {
-            clearInterval(
-                state.jobPollingTimer
-            );
-        }
-
-        let attempts = 0;
-
-        state.jobPollingTimer =
-            setInterval(
-                async () => {
-                    attempts++;
-
-                    try {
-                        const data =
-                            await checkJobStatus(
-                                jobId
-                            );
-
-                        const status =
-                            String(
-                                firstDefined(
-                                    data?.status,
-                                    data?.state,
-                                    data?.jobStatus,
-                                    ""
-                                )
-                            ).toUpperCase();
-
-                        if (
-                            [
-                                "COMPLETED",
-                                "SUCCESS",
-                                "FAILED",
-                                "ERROR",
-                                "CANCELLED"
-                            ].includes(status)
-                        ) {
-                            clearInterval(
-                                state.jobPollingTimer
-                            );
-
-                            state.jobPollingTimer =
-                                null;
-
-                            await loadAdminInvoices();
-                        }
-                    } catch {
-                        /*
-                         * Keep polling until the maximum number
-                         * of attempts is reached.
-                         */
-                    }
-
-                    if (attempts >= 30) {
-                        clearInterval(
-                            state.jobPollingTimer
-                        );
-
-                        state.jobPollingTimer =
-                            null;
-                    }
-                },
-                3000
-            );
-    }
-
-    function restoreLastJob() {
         if (
-            state.lastJobId &&
-            $("job-id")
+            Array.isArray(value)
         ) {
-            $("job-id").value =
-                state.lastJobId;
+            return value.map(
+                sanitizeJobStatus
+            );
         }
+
+        if (
+            !value ||
+            typeof value !== "object"
+        ) {
+            return value;
+        }
+
+        const result = {};
+
+        Object.entries(value)
+            .forEach(
+                ([key, entry]) => {
+                    /*
+                     * Do not render backend IDs.
+                     */
+                    if (
+                        /^(id|.*Id|.*ID)$/i.test(
+                            key
+                        )
+                    ) {
+                        return;
+                    }
+
+                    result[key] =
+                        sanitizeJobStatus(
+                            entry
+                        );
+                }
+            );
+
+        return result;
     }
 
 
@@ -3686,60 +4388,40 @@
         ]);
     }
 
-    async function loadHealth(
-        silent = false
-    ) {
+    async function loadHealth() {
         const result =
             await apiRequest(
                 ENDPOINTS.health,
                 {
                     method: "GET"
-                },
-                {
-                    silent
                 }
             );
 
         const data =
             responseData(result);
 
-        renderHealth(
-            data
-        );
-
-        return data;
-    }
-
-    function renderHealth(data) {
-        const status =
-            firstDefined(
-                data?.status,
-                "UNKNOWN"
-            );
-
         setText(
             "monitor-health-status",
-            status
-        );
-
-        setText(
-            "admin-health-status",
-            status
+            firstDefined(
+                data?.status,
+                "UP"
+            )
         );
 
         const dot =
             $("monitor-health-dot");
 
         if (dot) {
-            dot.className =
-                "health-dot " +
-                (
-                    String(status)
-                        .toUpperCase() ===
+            dot.classList.toggle(
+                "healthy",
+                String(
+                    firstDefined(
+                        data?.status,
+                        ""
+                    )
+                ).toUpperCase() ===
                     "UP"
-                        ? "healthy"
-                        : "unhealthy"
-                );
+            );
         }
 
         const json =
@@ -3749,6 +4431,16 @@
             json.textContent =
                 safeJson(data);
         }
+
+        setText(
+            "admin-health-status",
+            firstDefined(
+                data?.status,
+                "—"
+            )
+        );
+
+        return data;
     }
 
     async function loadInfo() {
@@ -3763,11 +4455,11 @@
         const data =
             responseData(result);
 
-        const element =
+        const json =
             $("monitor-info-json");
 
-        if (element) {
-            element.textContent =
+        if (json) {
+            json.textContent =
                 safeJson(data);
         }
 
@@ -3786,11 +4478,11 @@
         const data =
             responseData(result);
 
-        const element =
+        const json =
             $("monitor-metrics-json");
 
-        if (element) {
-            element.textContent =
+        if (json) {
+            json.textContent =
                 safeJson(data);
         }
 
@@ -3799,106 +4491,20 @@
 
 
     /* =========================================================
-       INVOICE DETAIL
-       ========================================================= */
-
-    function viewInvoice(id) {
-        const invoice =
-            state.invoices.find(
-                (item) =>
-                    String(
-                        invoiceId(item)
-                    ) === String(id)
-            );
-
-        if (!invoice) {
-            showError(
-                "Invoice details are not available."
-            );
-            return;
-        }
-
-        openConfirmModal({
-            title: "Invoice details",
-            eyebrow: "Invoice",
-            body: `
-                <div class="detail-list">
-                    <div>
-                        <span>Invoice ID</span>
-                        <strong>${escapeHtml(
-                invoiceId(invoice)
-            )}</strong>
-                    </div>
-
-                    <div>
-                        <span>Customer</span>
-                        <strong>${escapeHtml(
-                customerName(invoice)
-            )}</strong>
-                    </div>
-
-                    <div>
-                        <span>Meter</span>
-                        <strong>${escapeHtml(
-                invoiceMeter(invoice)
-            )}</strong>
-                    </div>
-
-                    <div>
-                        <span>Period</span>
-                        <strong>${escapeHtml(
-                invoicePeriod(invoice)
-            )}</strong>
-                    </div>
-
-                    <div>
-                        <span>Amount</span>
-                        <strong>${escapeHtml(
-                formatCurrency(
-                    invoiceAmount(
-                        invoice
-                    )
-                )
-            )}</strong>
-                    </div>
-
-                    <div>
-                        <span>Status</span>
-                        <strong>${escapeHtml(
-                invoiceStatus(
-                    invoice
-                )
-            )}</strong>
-                    </div>
-                </div>
-            `,
-            confirmText: "Close",
-            confirmClass: "btn-primary",
-            hideCancel: true,
-            onConfirm() {}
-        });
-    }
-
-
-    /* =========================================================
-       CONFIRMATION MODAL
+       MODAL
        ========================================================= */
 
     let modalConfirmHandler =
         null;
 
-    function openConfirmModal({
-                                  title,
-                                  eyebrow = "Confirmation",
-                                  body,
-                                  confirmText = "Confirm",
-                                  confirmClass = "btn-danger",
-                                  hideCancel = false,
-                                  onConfirm
-                              }) {
+    function openConfirmModal(
+        title,
+        message,
+        onConfirm
+    ) {
         setText(
             "modal-eyebrow",
-            eyebrow
+            "Confirmation"
         );
 
         setText(
@@ -3906,31 +4512,60 @@
             title
         );
 
-        const bodyElement =
+        const body =
             $("modal-body");
 
-        if (bodyElement) {
-            bodyElement.innerHTML =
-                body;
+        if (body) {
+            body.textContent =
+                message;
         }
 
-        const confirmButton =
-            $("modal-confirm");
+        show(
+            $("modal-cancel")
+        );
 
-        confirmButton.textContent =
-            confirmText;
-
-        confirmButton.className =
-            `btn ${confirmClass}`;
-
-        if (hideCancel) {
-            hide($("modal-cancel"));
-        } else {
-            show($("modal-cancel"));
-        }
+        setText(
+            "modal-confirm",
+            "Confirm"
+        );
 
         modalConfirmHandler =
             onConfirm;
+
+        show(
+            $("modal-backdrop")
+        );
+    }
+
+    function openInfoModal(
+        title,
+        html
+    ) {
+        setText(
+            "modal-eyebrow",
+            "Details"
+        );
+
+        setText(
+            "modal-title",
+            title
+        );
+
+        const body =
+            $("modal-body");
+
+        if (body) {
+            body.innerHTML =
+                html;
+        }
+
+        hide(
+            $("modal-confirm")
+        );
+
+        hide(
+            $("modal-cancel")
+        );
 
         show(
             $("modal-backdrop")
@@ -3944,6 +4579,14 @@
 
         modalConfirmHandler =
             null;
+
+        show(
+            $("modal-confirm")
+        );
+
+        show(
+            $("modal-cancel")
+        );
     }
 
     async function confirmModalAction() {
@@ -3967,10 +4610,9 @@
         try {
             await handler();
             closeModal();
-        } catch (error) {
+        } catch {
             /*
-             * apiRequest already displays the
-             * backend error.
+             * Backend error already shown.
              */
         } finally {
             setButtonLoading(
@@ -4007,7 +4649,7 @@
 
 
     /* =========================================================
-       DATE / BILLING HELPERS
+       BILLING PERIOD
        ========================================================= */
 
     function initialiseBillingPeriod(
@@ -4018,7 +4660,7 @@
             new Date();
 
         /*
-         * Backend generates previous calendar month.
+         * Previous calendar month.
          */
         let year =
             now.getFullYear();
@@ -4048,63 +4690,34 @@
         }
     }
 
-    function setDefaultDateTime(
-        id
-    ) {
-        const input =
-            $(id);
-
-        if (!input) return;
-
-        const now =
-            new Date();
-
-        now.setMinutes(
-            now.getMinutes() -
-            now.getTimezoneOffset()
-        );
-
-        input.value =
-            now.toISOString()
-                .slice(0, 16);
-    }
-
-    function localDateTimeToIso(
-        value
-    ) {
-        if (!value) {
-            return null;
-        }
-
-        const date =
-            new Date(value);
-
-        return date.toISOString();
-    }
-
 
     /* =========================================================
-       ENTITY EXTRACTION HELPERS
+       ENTITY HELPERS
        ========================================================= */
 
-    function meterId(meter) {
+    function meterId(
+        meter
+    ) {
         return firstDefined(
             meter?.id,
             meter?.waterMeterId
         );
     }
 
-    function meterNumber(meter) {
+    function meterNumber(
+        meter
+    ) {
         return firstDefined(
             meter?.meterNumber,
             meter?.number,
             meter?.meterNo,
-            meterId(meter),
             "Meter"
         );
     }
 
-    function billingPlanId(meter) {
+    function billingPlanId(
+        meter
+    ) {
         return firstDefined(
             meter?.billingPlanId,
             meter?.planId,
@@ -4113,31 +4726,38 @@
         );
     }
 
-    function planName(meter) {
+    function planName(
+        meter
+    ) {
         return firstDefined(
             meter?.billingPlan?.name,
             meter?.plan?.name,
             meter?.billingPlanName,
-            billingPlanId(meter),
             "—"
         );
     }
 
-    function planId(plan) {
+    function planId(
+        plan
+    ) {
         return firstDefined(
             plan?.id,
             plan?.billingPlanId
         );
     }
 
-    function invoiceId(invoice) {
+    function invoiceId(
+        invoice
+    ) {
         return firstDefined(
             invoice?.id,
             invoice?.invoiceId
         );
     }
 
-    function invoiceAmount(invoice) {
+    function invoiceAmount(
+        invoice
+    ) {
         return firstDefined(
             invoice?.totalAmount,
             invoice?.amount,
@@ -4148,7 +4768,9 @@
         );
     }
 
-    function invoiceStatus(invoice) {
+    function invoiceStatus(
+        invoice
+    ) {
         return firstDefined(
             invoice?.status,
             invoice?.invoiceStatus,
@@ -4156,29 +4778,32 @@
         );
     }
 
-    function customerName(invoice) {
+    function customerName(
+        invoice
+    ) {
         return firstDefined(
             invoice?.customer?.username,
             invoice?.customerUsername,
             invoice?.username,
             invoice?.user?.username,
-            invoice?.userId,
             "—"
         );
     }
 
-    function invoiceMeter(invoice) {
+    function invoiceMeter(
+        invoice
+    ) {
         return firstDefined(
             invoice?.waterMeter?.meterNumber,
             invoice?.meterNumber,
             invoice?.waterMeterNumber,
-            invoice?.waterMeterId,
-            invoice?.meterId,
             "—"
         );
     }
 
-    function invoicePeriod(invoice) {
+    function invoicePeriod(
+        invoice
+    ) {
         const year =
             firstDefined(
                 invoice?.year,
@@ -4195,18 +4820,43 @@
             year !== undefined &&
             month !== undefined
         ) {
-            return `${year}-${String(month).padStart(
-                2,
-                "0"
-            )}`;
+            return `${year}-${String(
+                month
+            ).padStart(2, "0")}`;
         }
 
         return firstDefined(
             invoice?.billingPeriod,
             invoice?.period,
-            invoice?.billingMonth,
             "—"
         );
+    }
+
+
+    /* =========================================================
+       FORMATTERS
+       ========================================================= */
+
+    function formatCurrency(
+        value
+    ) {
+        const number =
+            Number(value);
+
+        if (
+            Number.isNaN(number)
+        ) {
+            return "₹0.00";
+        }
+
+        return new Intl.NumberFormat(
+            "en-IN",
+            {
+                style: "currency",
+                currency: "INR",
+                minimumFractionDigits: 2
+            }
+        ).format(number);
     }
 
     function compareInvoicesDescending(
@@ -4231,7 +4881,9 @@
                 )
             );
 
-        if (aYear !== bYear) {
+        if (
+            aYear !== bYear
+        ) {
             return bYear - aYear;
         }
 
@@ -4256,31 +4908,6 @@
         return bMonth - aMonth;
     }
 
-
-    /* =========================================================
-       FORMATTERS
-       ========================================================= */
-
-    function formatCurrency(value) {
-        const number =
-            Number(value);
-
-        if (
-            Number.isNaN(number)
-        ) {
-            return "₹0.00";
-        }
-
-        return new Intl.NumberFormat(
-            "en-IN",
-            {
-                style: "currency",
-                currency: "INR",
-                minimumFractionDigits: 2
-            }
-        ).format(number);
-    }
-
     function emptyRow(
         colspan,
         message
@@ -4290,7 +4917,9 @@
                 <td
                     colspan="${colspan}"
                     class="empty-state">
-                    ${escapeHtml(message)}
+                    ${escapeHtml(
+                        message
+                    )}
                 </td>
             </tr>
         `;
@@ -4298,7 +4927,7 @@
 
 
     /* =========================================================
-       EVENT DELEGATION
+       ACTION DELEGATION
        ========================================================= */
 
     async function handleActionClick(
@@ -4309,7 +4938,9 @@
                 "[data-action]"
             );
 
-        if (!target) return;
+        if (!target) {
+            return;
+        }
 
         const action =
             target.dataset.action;
@@ -4354,22 +4985,8 @@
                 );
                 break;
 
-            case "lookup-meter":
-                await lookupMeterById(
-                    target.dataset.meterId
-                );
-                break;
-
             case "edit-current-meter":
-                if (
-                    state.currentMeter
-                ) {
-                    await editMeterById(
-                        meterId(
-                            state.currentMeter
-                        )
-                    );
-                }
+                editCurrentMeter();
                 break;
 
             case "edit-meter":
@@ -4434,16 +5051,6 @@
                     ?.remove();
                 break;
 
-            case "use-meter-reading":
-                $("customer-reading-meter")
-                    .value =
-                    target.dataset.meterId;
-
-                navigateTo(
-                    "customer-reading"
-                );
-                break;
-
             case "view-invoice":
                 viewInvoice(
                     target.dataset.invoiceId
@@ -4454,7 +5061,7 @@
 
 
     /* =========================================================
-       NAVIGATION EVENTS
+       SECTION TARGETS
        ========================================================= */
 
     function handleSectionTargetClick(
@@ -4465,23 +5072,33 @@
                 "[data-section-target]"
             );
 
-        if (!target) return;
+        if (!target) {
+            return;
+        }
 
         const section =
             target.dataset.sectionTarget;
 
-        if (!section) return;
+        if (!section) {
+            return;
+        }
 
-        navigateTo(section);
+        navigateTo(
+            section
+        );
     }
 
-    function handleNavClick(event) {
+    function handleNavClick(
+        event
+    ) {
         const button =
             event.target.closest(
                 ".nav-item[data-section]"
             );
 
-        if (!button) return;
+        if (!button) {
+            return;
+        }
 
         navigateTo(
             button.dataset.section
@@ -4490,49 +5107,36 @@
 
 
     /* =========================================================
-       FORM RESET HANDLING
+       FORM RESET
        ========================================================= */
 
-    function handleFormReset(event) {
+    function handleFormReset(
+        event
+    ) {
         const form =
             event.target;
 
         setTimeout(() => {
-
-            if (
-                form.id ===
-                "customer-reading-form"
-            ) {
-                setDefaultDateTime(
-                    "customer-reading-at"
-                );
-            }
-
-            if (
-                form.id ===
-                "admin-reading-form"
-            ) {
-                setDefaultDateTime(
-                    "admin-reading-at"
-                );
-            }
-
             if (
                 form.id ===
                 "admin-create-plan-form"
             ) {
-                $("slab-rows").innerHTML =
-                    "";
+                const rows =
+                    $("slab-rows");
+
+                if (rows) {
+                    rows.innerHTML =
+                        "";
+                }
 
                 updatePlanTypeUI();
             }
-
         }, 0);
     }
 
 
     /* =========================================================
-       INITIAL EVENT BINDING
+       EVENTS
        ========================================================= */
 
     function bindEvents() {
@@ -4555,6 +5159,9 @@
                 logout
             );
 
+
+        /* Sidebar */
+
         $("sidebar-open")
             ?.addEventListener(
                 "click",
@@ -4573,14 +5180,17 @@
                 closeMobileSidebar
             );
 
+
+        /* Refresh */
+
         $("refresh-current")
             ?.addEventListener(
                 "click",
-                () => {
+                async () => {
                     if (
                         state.currentSection
                     ) {
-                        loadSectionData(
+                        await loadSectionData(
                             state.currentSection
                         );
                     }
@@ -4607,12 +5217,6 @@
 
 
         /* Customer */
-
-        $("customer-reading-form")
-            ?.addEventListener(
-                "submit",
-                submitCustomerReading
-            );
 
         $("customer-generate-form")
             ?.addEventListener(
@@ -4678,15 +5282,6 @@
             );
 
 
-        /* Admin readings */
-
-        $("admin-reading-form")
-            ?.addEventListener(
-                "submit",
-                submitAdminReading
-            );
-
-
         /* Plans */
 
         $("admin-create-plan-form")
@@ -4704,13 +5299,17 @@
         $("plan-type")
             ?.addEventListener(
                 "change",
-                () => updatePlanTypeUI()
+                () =>
+                    updatePlanTypeUI()
             );
 
         $("edit-plan-type")
             ?.addEventListener(
                 "change",
-                () => updatePlanTypeUI("edit")
+                () =>
+                    updatePlanTypeUI(
+                        "edit"
+                    )
             );
 
 
@@ -4720,16 +5319,6 @@
             ?.addEventListener(
                 "submit",
                 startAdminBillingJob
-            );
-
-        $("admin-job-status-form")
-            ?.addEventListener(
-                "submit",
-                async (event) => {
-                    event.preventDefault();
-
-                    await checkJobStatus();
-                }
             );
 
 
@@ -4767,7 +5356,7 @@
             );
 
 
-        /* Reset */
+        /* Form reset */
 
         document.addEventListener(
             "reset",
@@ -4775,13 +5364,14 @@
         );
 
 
-        /* Keyboard */
+        /* Escape */
 
         document.addEventListener(
             "keydown",
             (event) => {
                 if (
-                    event.key === "Escape"
+                    event.key ===
+                    "Escape"
                 ) {
                     closeModal();
                     closeMobileSidebar();
@@ -4792,22 +5382,17 @@
 
 
     /* =========================================================
-       APPLICATION INITIALIZATION
+       INITIALIZATION
        ========================================================= */
 
-    async function initialise() {
-        loadSession();
-
+    function initialise() {
         bindEvents();
 
-        setDefaultDateTime(
-            "customer-reading-at"
-        );
-
-        setDefaultDateTime(
-            "admin-reading-at"
-        );
-
+        /*
+         * There is intentionally NO loadSession().
+         *
+         * state starts empty on every page load.
+         */
         initialiseBillingPeriod(
             "customer-billing-year",
             "customer-billing-month"
@@ -4819,18 +5404,17 @@
         );
 
         updatePlanTypeUI();
-        updatePlanTypeUI("edit");
 
-        if (isAuthenticated()) {
-            showAppView();
-        } else {
-            showLoginView();
-        }
+        updatePlanTypeUI(
+            "edit"
+        );
+
+        showLoginView();
     }
 
 
     /* =========================================================
-       START APPLICATION
+       START
        ========================================================= */
 
     if (
