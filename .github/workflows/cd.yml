@@ -1,0 +1,76 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+    branches:
+      - main
+
+concurrency:
+  group: billing-production-deployment
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout approved commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Prepare SSH key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+        run: |
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$RUNNER_TEMP/lightsail_key"
+          chmod 600 "$RUNNER_TEMP/lightsail_key"
+
+      - name: Add Lightsail host to known hosts
+        env:
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+        run: |
+          ssh-keyscan -H "$LIGHTSAIL_HOST" > "$RUNNER_TEMP/known_hosts"
+
+      - name: Deploy approved image
+        env:
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+          LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
+          DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          ssh \
+            -i "$RUNNER_TEMP/lightsail_key" \
+            -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" \
+            "$LIGHTSAIL_USER@$LIGHTSAIL_HOST" \
+            "bash -s -- '$DEPLOY_SHA'" <<'REMOTE_SCRIPT'
+
+          set -e
+
+          SHA="$1"
+
+          echo "Deploying image:"
+          echo "ghcr.io/karmarankartik/billing-software:$SHA"
+
+          curl -fsSL \
+            "https://raw.githubusercontent.com/karmarankartik/billing-software/main/deployment/deployment.sh" \
+            -o /tmp/deployment.sh
+
+          chmod +x /tmp/deployment.sh
+
+          /tmp/deployment.sh "$SHA"
+
+          rm -f /tmp/deployment.sh
+
+          REMOTE_SCRIPT
