@@ -54,7 +54,7 @@ public class AuthService {
         session.setRevokedAt(null);
         sessionRepository.save(session);
 
-        LoginResponse loginResponse = new LoginResponse(sessionToken);
+        LoginResponse loginResponse = new LoginResponse(sessionToken,user.getRole());
 
         return loginResponse;
     }
