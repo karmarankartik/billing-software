@@ -1,0 +1,3513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Water Billing Management System">
+    <title>Billing Software</title>
+
+    <link rel="stylesheet" href="app.css">
+</head>
+
+<body>
+
+<!-- =========================================================
+     LOGIN
+     ========================================================= -->
+<section id="login-view" class="auth-view">
+
+    <div class="auth-card">
+
+        <div class="brand brand-auth">
+            <div class="brand-mark">B</div>
+
+            <div>
+                <h1>Billing Software</h1>
+                <p>Water billing management</p>
+            </div>
+        </div>
+
+        <div class="auth-heading">
+            <h2>Welcome back</h2>
+            <p>Sign in to continue to your dashboard.</p>
+        </div>
+
+        <form id="login-form" class="form-stack">
+
+            <div class="field">
+                <label for="login-username">Username</label>
+
+                <input
+                        id="login-username"
+                        name="username"
+                        type="text"
+                        autocomplete="username"
+                        placeholder="Enter username"
+                        required
+                >
+            </div>
+
+            <div class="field">
+                <label for="login-password">Password</label>
+
+                <input
+                        id="login-password"
+                        name="password"
+                        type="password"
+                        autocomplete="current-password"
+                        placeholder="Enter password"
+                        required
+                >
+            </div>
+
+            <div class="field">
+                <label for="login-role">Dashboard</label>
+
+                <select id="login-role" name="role">
+                    <option value="CUSTOMER">Customer</option>
+                    <option value="ADMIN">Administrator</option>
+                </select>
+
+                <small class="field-help">
+                    Dashboard selection does not bypass backend authorization.
+                </small>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">
+                Sign in
+            </button>
+
+        </form>
+
+        <div id="login-error" class="inline-alert error hidden"></div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     APPLICATION
+     ========================================================= -->
+<div id="app-view" class="app-shell hidden">
+
+    <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+
+    <!-- =====================================================
+         SIDEBAR
+         ===================================================== -->
+    <aside id="sidebar" class="sidebar">
+
+        <div class="sidebar-top">
+
+            <div class="brand">
+                <div class="brand-mark">B</div>
+
+                <div class="brand-copy">
+                    <strong>Billing</strong>
+                    <span>Management</span>
+                </div>
+            </div>
+
+            <button
+                    id="sidebar-close"
+                    type="button"
+                    class="icon-btn mobile-only"
+                    aria-label="Close navigation">
+                ×
+            </button>
+
+        </div>
+
+
+        <!-- ================= CUSTOMER NAV ================= -->
+
+        <nav
+                id="customer-nav"
+                class="side-nav hidden"
+                aria-label="Customer navigation">
+
+            <div class="nav-label">Customer</div>
+
+            <button
+                    class="nav-item active"
+                    type="button"
+                    data-section="customer-overview">
+
+                <span class="nav-icon">⌂</span>
+                <span>Overview</span>
+
+            </button>
+
+            <button
+                    class="nav-item"
+                    type="button"
+                    data-section="customer-meters">
+
+                <span class="nav-icon">◫</span>
+                <span>My Meters</span>
+
+            </button>
+
+            <button
+                    class="nav-item"
+                    type="button"
+                    data-section="customer-reading">
+
+                <span class="nav-icon">↗</span>
+                <span>Meter Reading</span>
+
+            </button>
+
+            <button
+                    class="nav-item"
+                    type="button"
+                    data-section="customer-invoices">
+
+                <span class="nav-icon">▤</span>
+                <span>My Invoices</span>
+
+            </button>
+
+            <button
+                    class="nav-item"
+                    type="button"
+                    data-section="customer-generate">
+
+                <span class="nav-icon">＋</span>
+                <span>Generate Invoice</span>
+
+            </button>
+
+            <button
+                    class="nav-item"
+                    type="button"
+                    data-section="customer-account">
+
+                <span class="nav-icon">◉</span>
+                <span>Account</span>
+
+            </button>
+
+        </nav>
+
+
+        <!-- ================= ADMIN NAV ================= -->
+
+        <nav
+                id="admin-nav"
+                class="side-nav hidden"
+                aria-label="Administrator navigation">
+
+            <div class="nav-label">Administration</div>
+
+            <button
+                    class="nav-item active"
+                    type="button"
+                    data-section="admin-overview">
+
+                <span class="nav-icon">⌂</span>
+                <span>Overview</span>
+
+            </button>
+
+            <button
+                    class="nav-item"
+                    type="button"
+                    data-section="admin-users">
+
+                <span class="nav-icon">♙</span>
+                <span>Users</span>
+
+            </button>
+
+            <button
+                    class="nav-item"
+                    type="button"
+                    data-section="admin-meters">
+
+                <span class="nav-icon">◫</span>
+                <span>Water Meters</span>
+
+            </button>
+
+            <button
+                    class="nav-item"
+                    type="button"
+                    data-section="admin-assignments">
+
+                <span class="nav-icon">⇄</span>
+                <span>Assignments</span>
+
+            </button>
+
+            <button
+                    class="nav-item"
+                    type="button"
+                    data-section="admin-readings">
+
+                <span class="nav-icon">↗</span>
+                <span>Meter Readings</span>
+
+            </button>
+
+            <button
+                    class="nav-item"
+                    type="button"
+                    data-section="admin-plans">
+
+                <span class="nav-icon">◈</span>
+                <span>Billing Plans</span>
+
+            </button>
+
+            <button
+                    class="nav-item"
+                    type="button"
+                    data-section="admin-invoices">
+
+                <span class="nav-icon">▤</span>
+                <span>Invoices</span>
+
+            </button>
+
+            <button
+                    class="nav-item"
+                    type="button"
+                    data-section="admin-billing">
+
+                <span class="nav-icon">₹</span>
+                <span>Billing Jobs</span>
+
+            </button>
+
+            <button
+                    class="nav-item"
+                    type="button"
+                    data-section="admin-monitoring">
+
+                <span class="nav-icon">◌</span>
+                <span>Monitoring</span>
+
+            </button>
+
+        </nav>
+
+
+        <!-- ================= SIDEBAR USER ================= -->
+
+        <div class="sidebar-bottom">
+
+            <div class="session-user">
+
+                <div id="session-avatar" class="avatar">
+                    U
+                </div>
+
+                <div class="session-user-text">
+
+                    <strong id="session-username">
+                        User
+                    </strong>
+
+                    <span id="session-role">
+                        CUSTOMER
+                    </span>
+
+                </div>
+
+            </div>
+
+            <button
+                    id="logout-btn"
+                    type="button"
+                    class="nav-item logout-item">
+
+                <span class="nav-icon">↪</span>
+                <span>Logout</span>
+
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+         ===================================================== -->
+    <main class="main-content">
+
+        <!-- ================= TOP BAR ================= -->
+
+        <header class="topbar">
+
+            <div class="topbar-left">
+
+                <button
+                        id="sidebar-open"
+                        type="button"
+                        class="icon-btn mobile-only"
+                        aria-label="Open navigation">
+                    ☰
+                </button>
+
+                <div>
+
+                    <p id="breadcrumb-role" class="eyebrow">
+                        Customer
+                    </p>
+
+                    <h1 id="page-title">
+                        Overview
+                    </h1>
+
+                </div>
+
+            </div>
+
+
+            <div class="topbar-actions">
+
+                <button
+                        id="refresh-current"
+                        type="button"
+                        class="btn btn-secondary">
+
+                    ↻
+                    <span class="desktop-only">
+                        Refresh
+                    </span>
+
+                </button>
+
+                <div id="topbar-avatar" class="avatar avatar-top">
+                    U
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <div id="global-alert" class="global-alert hidden"></div>
+
+
+        <!-- =================================================
+             CUSTOMER DASHBOARD
+             ================================================= -->
+
+        <section
+                id="section-customer-overview"
+                class="page-section active">
+
+            <div class="section-heading">
+
+                <div>
+                    <h2>Customer Dashboard</h2>
+                    <p>
+                        Manage your water meters, readings and invoices.
+                    </p>
+                </div>
+
+                <button
+                        type="button"
+                        class="btn btn-primary"
+                        data-section-target="customer-generate">
+
+                    Generate invoice
+
+                </button>
+
+            </div>
+
+
+            <div class="stats-grid">
+
+                <article class="stat-card">
+
+                    <div class="stat-icon">◫</div>
+
+                    <div>
+                        <span class="stat-label">
+                            My meters
+                        </span>
+
+                        <strong id="customer-meter-count">
+                            —
+                        </strong>
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon">▤</div>
+
+                    <div>
+                        <span class="stat-label">
+                            Invoices
+                        </span>
+
+                        <strong id="customer-invoice-count">
+                            —
+                        </strong>
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon">₹</div>
+
+                    <div>
+                        <span class="stat-label">
+                            Latest invoice
+                        </span>
+
+                        <strong id="customer-latest-invoice">
+                            —
+                        </strong>
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon">●</div>
+
+                    <div>
+                        <span class="stat-label">
+                            Session
+                        </span>
+
+                        <strong class="status-text positive">
+                            Active
+                        </strong>
+                    </div>
+
+                </article>
+
+            </div>
+
+
+            <div class="content-grid two-columns">
+
+                <!-- Customer meters -->
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <h3>My water meters</h3>
+                            <p>
+                                Meters assigned to your account.
+                            </p>
+                        </div>
+
+                        <button
+                                type="button"
+                                class="btn btn-ghost btn-sm"
+                                data-section-target="customer-meters">
+
+                            View all
+
+                        </button>
+
+                    </div>
+
+
+                    <div class="table-wrap">
+
+                        <table>
+
+                            <thead>
+                            <tr>
+                                <th>Meter</th>
+                                <th>Billing Plan</th>
+                                <th>Status</th>
+                            </tr>
+                            </thead>
+
+                            <tbody id="customer-overview-meters">
+
+                            <tr>
+                                <td
+                                        colspan="3"
+                                        class="empty-state">
+
+                                    Loading...
+
+                                </td>
+                            </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </article>
+
+
+                <!-- Customer invoices -->
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <h3>Recent invoices</h3>
+                            <p>
+                                Your latest billing records.
+                            </p>
+                        </div>
+
+                        <button
+                                type="button"
+                                class="btn btn-ghost btn-sm"
+                                data-section-target="customer-invoices">
+
+                            View all
+
+                        </button>
+
+                    </div>
+
+
+                    <div class="table-wrap">
+
+                        <table>
+
+                            <thead>
+                            <tr>
+                                <th>Invoice</th>
+                                <th>Period</th>
+                                <th>Amount</th>
+                            </tr>
+                            </thead>
+
+                            <tbody id="customer-overview-invoices">
+
+                            <tr>
+                                <td
+                                        colspan="3"
+                                        class="empty-state">
+
+                                    Loading...
+
+                                </td>
+                            </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             CUSTOMER METERS
+             ================================================= -->
+
+        <section
+                id="section-customer-meters"
+                class="page-section">
+
+            <div class="section-heading">
+
+                <div>
+                    <h2>My Water Meters</h2>
+
+                    <p>
+                        View the meters assigned to your account.
+                    </p>
+                </div>
+
+                <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-action="load-my-meters">
+
+                    ↻ Refresh
+
+                </button>
+
+            </div>
+
+
+            <article class="panel">
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+                        <tr>
+                            <th>Meter ID</th>
+                            <th>Meter Number</th>
+                            <th>Billing Plan</th>
+                            <th>Assignment</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+
+                        <tbody id="customer-meters-table">
+
+                        <tr>
+                            <td
+                                    colspan="5"
+                                    class="empty-state">
+
+                                Loading...
+
+                            </td>
+                        </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+        <!-- =================================================
+             CUSTOMER METER READING
+             ================================================= -->
+
+        <section
+                id="section-customer-reading"
+                class="page-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h2>Submit Meter Reading</h2>
+
+                    <p>
+                        Record a TOTAL or FLOW reading for your meter.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="content-grid two-columns">
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h3>New reading</h3>
+
+                            <p>
+                                The backend validates the reading.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <form
+                            id="customer-reading-form"
+                            class="form-grid">
+
+                        <div class="field full">
+
+                            <label for="customer-reading-meter">
+                                Water meter
+                            </label>
+
+                            <select
+                                    id="customer-reading-meter"
+                                    required>
+
+                                <option value="">
+                                    Select meter
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label for="customer-reading-type">
+                                Reading type
+                            </label>
+
+                            <select
+                                    id="customer-reading-type"
+                                    required>
+
+                                <option value="TOTAL">
+                                    TOTAL
+                                </option>
+
+                                <option value="FLOW">
+                                    FLOW
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label for="customer-reading-value">
+                                Reading value
+                            </label>
+
+                            <input
+                                    id="customer-reading-value"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    placeholder="0.00"
+                                    required>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label for="customer-reading-at">
+                                Reading date/time
+                            </label>
+
+                            <input
+                                    id="customer-reading-at"
+                                    type="datetime-local"
+                                    required>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label for="customer-ingestion-key">
+                                Ingestion key
+                            </label>
+
+                            <input
+                                    id="customer-ingestion-key"
+                                    type="text"
+                                    placeholder="Unique ingestion key"
+                                    required>
+
+                        </div>
+
+
+                        <div class="form-actions full">
+
+                            <button
+                                    type="reset"
+                                    class="btn btn-secondary">
+
+                                Clear
+
+                            </button>
+
+                            <button
+                                    type="submit"
+                                    class="btn btn-primary">
+
+                                Submit reading
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </article>
+
+
+                <article class="panel info-panel">
+
+                    <div class="info-icon">
+                        i
+                    </div>
+
+                    <h3>Reading guidance</h3>
+
+                    <ul class="clean-list">
+
+                        <li>
+                            <strong>TOTAL</strong>
+                            represents cumulative meter readings.
+                        </li>
+
+                        <li>
+                            <strong>FLOW</strong>
+                            can be used for flow measurements.
+                        </li>
+
+                        <li>
+                            Backend validation remains authoritative.
+                        </li>
+
+                        <li>
+                            Backend error messages will be shown directly
+                            when a request fails.
+                        </li>
+
+                    </ul>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             CUSTOMER INVOICES
+             ================================================= -->
+
+        <section
+                id="section-customer-invoices"
+                class="page-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h2>My Invoices</h2>
+
+                    <p>
+                        View invoices associated with your account.
+                    </p>
+
+                </div>
+
+                <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-action="load-customer-invoices">
+
+                    ↻ Refresh
+
+                </button>
+
+            </div>
+
+
+            <article class="panel">
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+                        <tr>
+                            <th>Invoice ID</th>
+                            <th>Period</th>
+                            <th>Meter</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Details</th>
+                        </tr>
+                        </thead>
+
+                        <tbody id="customer-invoices-table">
+
+                        <tr>
+                            <td
+                                    colspan="6"
+                                    class="empty-state">
+
+                                Loading...
+
+                            </td>
+                        </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+        <!-- =================================================
+             CUSTOMER GENERATE INVOICE
+             ================================================= -->
+
+        <section
+                id="section-customer-generate"
+                class="page-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h2>Generate Invoice</h2>
+
+                    <p>
+                        Generate billing for a previous calendar month.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <article class="panel narrow-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h3>Previous-month billing</h3>
+
+                        <p>
+                            Select the billing period and submit it.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <form
+                        id="customer-generate-form"
+                        class="form-grid">
+
+                    <div class="field">
+
+                        <label for="customer-billing-year">
+                            Year
+                        </label>
+
+                        <input
+                                id="customer-billing-year"
+                                type="number"
+                                min="2000"
+                                max="2100"
+                                required>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="customer-billing-month">
+                            Month
+                        </label>
+
+                        <select
+                                id="customer-billing-month"
+                                required>
+
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-actions full">
+
+                        <button
+                                type="submit"
+                                class="btn btn-primary">
+
+                            Generate invoice
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </article>
+
+        </section>
+
+
+        <!-- =================================================
+             CUSTOMER ACCOUNT
+             ================================================= -->
+
+        <section
+                id="section-customer-account"
+                class="page-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h2>Account</h2>
+
+                    <p>
+                        Your authenticated session information.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <article class="panel narrow-panel">
+
+                <div class="account-profile">
+
+                    <div
+                            id="account-avatar"
+                            class="avatar avatar-large">
+
+                        U
+
+                    </div>
+
+                    <div>
+
+                        <h3 id="account-username">
+                            User
+                        </h3>
+
+                        <p id="account-role">
+                            CUSTOMER
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="detail-list">
+
+                    <div>
+
+                        <span>Username</span>
+
+                        <strong id="account-username-detail">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>Role</span>
+
+                        <strong id="account-role-detail">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>Session</span>
+
+                        <strong class="status-text positive">
+                            Authenticated
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-actions">
+
+                    <button
+                            id="account-logout-btn"
+                            type="button"
+                            class="btn btn-danger">
+
+                        Logout
+
+                    </button>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+        <!-- =================================================
+             ADMIN OVERVIEW
+             ================================================= -->
+
+        <section
+                id="section-admin-overview"
+                class="page-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h2>Administrator Dashboard</h2>
+
+                    <p>
+                        Manage users, meters, plans, billing and monitoring.
+                    </p>
+
+                </div>
+
+                <button
+                        type="button"
+                        class="btn btn-primary"
+                        data-section-target="admin-billing">
+
+                    Run billing
+
+                </button>
+
+            </div>
+
+
+            <div class="stats-grid">
+
+                <article class="stat-card">
+
+                    <div class="stat-icon">◫</div>
+
+                    <div>
+
+                        <span class="stat-label">
+                            Water meters
+                        </span>
+
+                        <strong id="admin-meter-count">
+                            —
+                        </strong>
+
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon">◈</div>
+
+                    <div>
+
+                        <span class="stat-label">
+                            Billing plans
+                        </span>
+
+                        <strong id="admin-plan-count">
+                            —
+                        </strong>
+
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon">▤</div>
+
+                    <div>
+
+                        <span class="stat-label">
+                            Invoices
+                        </span>
+
+                        <strong id="admin-invoice-count">
+                            —
+                        </strong>
+
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon">●</div>
+
+                    <div>
+
+                        <span class="stat-label">
+                            System health
+                        </span>
+
+                        <strong
+                                id="admin-health-status"
+                                class="status-text">
+
+                            —
+
+                        </strong>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+
+            <div class="content-grid two-columns">
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h3>Water meters</h3>
+
+                            <p>
+                                Current meters managed by the system.
+                            </p>
+
+                        </div>
+
+                        <button
+                                type="button"
+                                class="btn btn-ghost btn-sm"
+                                data-section-target="admin-meters">
+
+                            Manage
+
+                        </button>
+
+                    </div>
+
+
+                    <div class="table-wrap">
+
+                        <table>
+
+                            <thead>
+                            <tr>
+                                <th>Meter</th>
+                                <th>Plan</th>
+                                <th>ID</th>
+                            </tr>
+                            </thead>
+
+                            <tbody id="admin-overview-meters">
+
+                            <tr>
+                                <td
+                                        colspan="3"
+                                        class="empty-state">
+
+                                    Loading...
+
+                                </td>
+                            </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </article>
+
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h3>Billing plans</h3>
+
+                            <p>
+                                Fixed and slab pricing configurations.
+                            </p>
+
+                        </div>
+
+                        <button
+                                type="button"
+                                class="btn btn-ghost btn-sm"
+                                data-section-target="admin-plans">
+
+                            Manage
+
+                        </button>
+
+                    </div>
+
+
+                    <div class="table-wrap">
+
+                        <table>
+
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Code</th>
+                                <th>Type</th>
+                            </tr>
+                            </thead>
+
+                            <tbody id="admin-overview-plans">
+
+                            <tr>
+                                <td
+                                        colspan="3"
+                                        class="empty-state">
+
+                                    Loading...
+
+                                </td>
+                            </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+
+            <article class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h3>Quick actions</h3>
+
+                        <p>
+                            Common administration operations.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="quick-actions">
+
+                    <button
+                            type="button"
+                            class="quick-action"
+                            data-section-target="admin-users">
+
+                        <span>♙</span>
+
+                        <strong>User management</strong>
+
+                        <small>
+                            Create, lookup, update or delete users.
+                        </small>
+
+                    </button>
+
+
+                    <button
+                            type="button"
+                            class="quick-action"
+                            data-section-target="admin-meters">
+
+                        <span>◫</span>
+
+                        <strong>Meter management</strong>
+
+                        <small>
+                            Create, update, lookup or delete meters.
+                        </small>
+
+                    </button>
+
+
+                    <button
+                            type="button"
+                            class="quick-action"
+                            data-section-target="admin-assignments">
+
+                        <span>⇄</span>
+
+                        <strong>Assignments</strong>
+
+                        <small>
+                            Assign or unassign meters.
+                        </small>
+
+                    </button>
+
+
+                    <button
+                            type="button"
+                            class="quick-action"
+                            data-section-target="admin-monitoring">
+
+                        <span>◌</span>
+
+                        <strong>System monitoring</strong>
+
+                        <small>
+                            Check health, info and application metrics.
+                        </small>
+
+                    </button>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+        <!-- =================================================
+             ADMIN USERS
+             ================================================= -->
+
+        <section
+                id="section-admin-users"
+                class="page-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h2>User Management</h2>
+
+                    <p>
+                        Create and manage users.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="content-grid two-columns">
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h3>Create user</h3>
+
+                            <p>
+                                Create a CUSTOMER or ADMIN account.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <form
+                            id="admin-create-user-form"
+                            class="form-grid">
+
+                        <div class="field full">
+
+                            <label for="create-user-username">
+                                Username
+                            </label>
+
+                            <input
+                                    id="create-user-username"
+                                    type="text"
+                                    required>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label for="create-user-password">
+                                Password
+                            </label>
+
+                            <input
+                                    id="create-user-password"
+                                    type="password"
+                                    required>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label for="create-user-role">
+                                Role
+                            </label>
+
+                            <select
+                                    id="create-user-role"
+                                    required>
+
+                                <option value="CUSTOMER">
+                                    CUSTOMER
+                                </option>
+
+                                <option value="ADMIN">
+                                    ADMIN
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-actions full">
+
+                            <button
+                                    type="reset"
+                                    class="btn btn-secondary">
+
+                                Clear
+
+                            </button>
+
+                            <button
+                                    type="submit"
+                                    class="btn btn-primary">
+
+                                Create user
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </article>
+
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h3>Lookup user</h3>
+
+                            <p>
+                                Fetch a user using their ID.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <form
+                            id="admin-user-lookup-form"
+                            class="inline-form">
+
+                        <div class="field">
+
+                            <label for="user-lookup-id">
+                                User ID
+                            </label>
+
+                            <input
+                                    id="user-lookup-id"
+                                    type="text"
+                                    placeholder="UUID"
+                                    required>
+
+                        </div>
+
+                        <button
+                                type="submit"
+                                class="btn btn-primary">
+
+                            Lookup
+
+                        </button>
+
+                    </form>
+
+
+                    <div
+                            id="user-detail-card"
+                            class="detail-card hidden">
+
+                        <div class="detail-card-header">
+
+                            <div>
+
+                                <span class="eyebrow">
+                                    User
+                                </span>
+
+                                <h3 id="user-detail-title">
+                                    —
+                                </h3>
+
+                            </div>
+
+                            <span
+                                    id="user-detail-role"
+                                    class="badge">
+
+                                —
+
+                            </span>
+
+                        </div>
+
+
+                        <dl class="definition-grid">
+
+                            <div>
+
+                                <dt>ID</dt>
+
+                                <dd id="user-detail-id">
+                                    —
+                                </dd>
+
+                            </div>
+
+                            <div>
+
+                                <dt>Username</dt>
+
+                                <dd id="user-detail-username">
+                                    —
+                                </dd>
+
+                            </div>
+
+                            <div>
+
+                                <dt>Role</dt>
+
+                                <dd id="user-detail-role-value">
+                                    —
+                                </dd>
+
+                            </div>
+
+                        </dl>
+
+
+                        <div class="form-actions">
+
+                            <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    data-action="edit-current-user">
+
+                                Edit
+
+                            </button>
+
+                            <button
+                                    type="button"
+                                    class="btn btn-danger"
+                                    data-action="delete-current-user">
+
+                                Delete
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+
+            <!-- Edit user -->
+
+            <article
+                    id="admin-user-edit-panel"
+                    class="panel hidden">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h3>Edit user</h3>
+
+                        <p>
+                            Update the selected user's details.
+                        </p>
+
+                    </div>
+
+                    <button
+                            type="button"
+                            class="icon-btn"
+                            data-action="close-user-edit"
+                            aria-label="Close">
+
+                        ×
+
+                    </button>
+
+                </div>
+
+
+                <form
+                        id="admin-edit-user-form"
+                        class="form-grid">
+
+                    <input
+                            id="edit-user-id"
+                            type="hidden">
+
+
+                    <div class="field">
+
+                        <label for="edit-user-username">
+                            Username
+                        </label>
+
+                        <input
+                                id="edit-user-username"
+                                type="text"
+                                required>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="edit-user-password">
+                            Password
+                        </label>
+
+                        <input
+                                id="edit-user-password"
+                                type="password"
+                                placeholder="New password">
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="edit-user-role">
+                            Role
+                        </label>
+
+                        <select
+                                id="edit-user-role"
+                                required>
+
+                            <option value="CUSTOMER">
+                                CUSTOMER
+                            </option>
+
+                            <option value="ADMIN">
+                                ADMIN
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-actions full">
+
+                        <button
+                                type="button"
+                                class="btn btn-secondary"
+                                data-action="close-user-edit">
+
+                            Cancel
+
+                        </button>
+
+                        <button
+                                type="submit"
+                                class="btn btn-primary">
+
+                            Update user
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </article>
+
+        </section>
+
+
+        <!-- =================================================
+             ADMIN WATER METERS
+             ================================================= -->
+
+        <section
+                id="section-admin-meters"
+                class="page-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h2>Water Meters</h2>
+
+                    <p>
+                        Manage meters and billing plan associations.
+                    </p>
+
+                </div>
+
+                <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-action="load-admin-meters">
+
+                    ↻ Refresh
+
+                </button>
+
+            </div>
+
+
+            <div class="content-grid two-columns">
+
+                <!-- Create meter -->
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h3>Create meter</h3>
+
+                            <p>
+                                Associate the meter with a billing plan.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <form
+                            id="admin-create-meter-form"
+                            class="form-grid">
+
+                        <div class="field full">
+
+                            <label for="create-meter-number">
+                                Meter number
+                            </label>
+
+                            <input
+                                    id="create-meter-number"
+                                    type="text"
+                                    required>
+
+                        </div>
+
+
+                        <div class="field full">
+
+                            <label for="create-meter-plan">
+                                Billing plan
+                            </label>
+
+                            <select
+                                    id="create-meter-plan"
+                                    required>
+
+                                <option value="">
+                                    Select billing plan
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-actions full">
+
+                            <button
+                                    type="reset"
+                                    class="btn btn-secondary">
+
+                                Clear
+
+                            </button>
+
+                            <button
+                                    type="submit"
+                                    class="btn btn-primary">
+
+                                Create meter
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </article>
+
+
+                <!-- Lookup meter -->
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h3>Meter lookup</h3>
+
+                            <p>
+                                Fetch one meter by ID.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <form
+                            id="admin-meter-lookup-form"
+                            class="inline-form">
+
+                        <div class="field">
+
+                            <label for="meter-lookup-id">
+                                Meter ID
+                            </label>
+
+                            <input
+                                    id="meter-lookup-id"
+                                    type="text"
+                                    required>
+
+                        </div>
+
+                        <button
+                                type="submit"
+                                class="btn btn-primary">
+
+                            Lookup
+
+                        </button>
+
+                    </form>
+
+
+                    <div
+                            id="meter-detail-card"
+                            class="detail-card hidden">
+
+                        <div class="detail-card-header">
+
+                            <div>
+
+                                <span class="eyebrow">
+                                    Water meter
+                                </span>
+
+                                <h3 id="meter-detail-title">
+                                    —
+                                </h3>
+
+                            </div>
+
+                        </div>
+
+
+                        <dl class="definition-grid">
+
+                            <div>
+
+                                <dt>ID</dt>
+
+                                <dd id="meter-detail-id">
+                                    —
+                                </dd>
+
+                            </div>
+
+                            <div>
+
+                                <dt>Meter number</dt>
+
+                                <dd id="meter-detail-number">
+                                    —
+                                </dd>
+
+                            </div>
+
+                            <div>
+
+                                <dt>Billing plan</dt>
+
+                                <dd id="meter-detail-plan">
+                                    —
+                                </dd>
+
+                            </div>
+
+                        </dl>
+
+
+                        <div class="form-actions">
+
+                            <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    data-action="edit-current-meter">
+
+                                Edit
+
+                            </button>
+
+                            <button
+                                    type="button"
+                                    class="btn btn-danger"
+                                    data-action="delete-current-meter">
+
+                                Delete
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+
+            <!-- All meters -->
+
+            <article class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h3>All water meters</h3>
+
+                        <p>
+                            Meters returned by the admin meter-list endpoint.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+
+                        <tr>
+                            <th>ID</th>
+                            <th>Meter Number</th>
+                            <th>Billing Plan</th>
+                            <th>Actions</th>
+                        </tr>
+
+                        </thead>
+
+                        <tbody id="admin-meters-table">
+
+                        <tr>
+
+                            <td
+                                    colspan="4"
+                                    class="empty-state">
+
+                                Loading...
+
+                            </td>
+
+                        </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </article>
+
+
+            <!-- Edit meter -->
+
+            <article
+                    id="admin-meter-edit-panel"
+                    class="panel hidden">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h3>Edit meter</h3>
+
+                        <p>
+                            Update meter details.
+                        </p>
+
+                    </div>
+
+                    <button
+                            type="button"
+                            class="icon-btn"
+                            data-action="close-meter-edit"
+                            aria-label="Close">
+
+                        ×
+
+                    </button>
+
+                </div>
+
+
+                <form
+                        id="admin-edit-meter-form"
+                        class="form-grid">
+
+                    <input
+                            id="edit-meter-id"
+                            type="hidden">
+
+
+                    <div class="field">
+
+                        <label for="edit-meter-number">
+                            Meter number
+                        </label>
+
+                        <input
+                                id="edit-meter-number"
+                                type="text"
+                                required>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="edit-meter-plan">
+                            Billing plan
+                        </label>
+
+                        <select
+                                id="edit-meter-plan"
+                                required>
+
+                            <option value="">
+                                Select billing plan
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-actions full">
+
+                        <button
+                                type="button"
+                                class="btn btn-secondary"
+                                data-action="close-meter-edit">
+
+                            Cancel
+
+                        </button>
+
+                        <button
+                                type="submit"
+                                class="btn btn-primary">
+
+                            Update meter
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </article>
+
+        </section>
+
+
+        <!-- =================================================
+             ADMIN ASSIGNMENTS
+             ================================================= -->
+
+        <section
+                id="section-admin-assignments"
+                class="page-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h2>Meter Assignments</h2>
+
+                    <p>
+                        Assign or unassign water meters from customers.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="content-grid two-columns">
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h3>Assign meter</h3>
+
+                            <p>
+                                Link a meter to a customer.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <form
+                            id="admin-assignment-form"
+                            class="form-stack">
+
+                        <div class="field">
+
+                            <label for="assignment-meter-id">
+                                Water meter ID
+                            </label>
+
+                            <input
+                                    id="assignment-meter-id"
+                                    type="text"
+                                    required>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label for="assignment-user-id">
+                                Customer user ID
+                            </label>
+
+                            <input
+                                    id="assignment-user-id"
+                                    type="text"
+                                    required>
+
+                        </div>
+
+
+                        <button
+                                type="submit"
+                                class="btn btn-primary">
+
+                            Assign meter
+
+                        </button>
+
+                    </form>
+
+                </article>
+
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h3>Unassign meter</h3>
+
+                            <p>
+                                Remove an existing meter assignment.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <form
+                            id="admin-unassignment-form"
+                            class="form-stack">
+
+                        <div class="field">
+
+                            <label for="unassignment-meter-id">
+                                Water meter ID
+                            </label>
+
+                            <input
+                                    id="unassignment-meter-id"
+                                    type="text"
+                                    required>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label for="unassignment-user-id">
+                                Customer user ID
+                            </label>
+
+                            <input
+                                    id="unassignment-user-id"
+                                    type="text"
+                                    required>
+
+                        </div>
+
+
+                        <button
+                                type="submit"
+                                class="btn btn-danger">
+
+                            Unassign meter
+
+                        </button>
+
+                    </form>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             ADMIN READINGS
+             ================================================= -->
+
+        <section
+                id="section-admin-readings"
+                class="page-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h2>Meter Readings</h2>
+
+                    <p>
+                        Record TOTAL or FLOW readings.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <article class="panel narrow-panel">
+
+                <form
+                        id="admin-reading-form"
+                        class="form-grid">
+
+                    <div class="field full">
+
+                        <label for="admin-reading-meter">
+                            Water meter ID
+                        </label>
+
+                        <input
+                                id="admin-reading-meter"
+                                type="text"
+                                required>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="admin-reading-type">
+                            Reading type
+                        </label>
+
+                        <select
+                                id="admin-reading-type"
+                                required>
+
+                            <option value="TOTAL">
+                                TOTAL
+                            </option>
+
+                            <option value="FLOW">
+                                FLOW
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="admin-reading-value">
+                            Reading value
+                        </label>
+
+                        <input
+                                id="admin-reading-value"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                required>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="admin-reading-at">
+                            Reading date/time
+                        </label>
+
+                        <input
+                                id="admin-reading-at"
+                                type="datetime-local"
+                                required>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="admin-ingestion-key">
+                            Ingestion key
+                        </label>
+
+                        <input
+                                id="admin-ingestion-key"
+                                type="text"
+                                required>
+
+                    </div>
+
+
+                    <div class="form-actions full">
+
+                        <button
+                                type="reset"
+                                class="btn btn-secondary">
+
+                            Clear
+
+                        </button>
+
+                        <button
+                                type="submit"
+                                class="btn btn-primary">
+
+                            Submit reading
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </article>
+
+        </section>
+
+
+        <!-- =================================================
+             ADMIN BILLING PLANS
+             ================================================= -->
+
+        <section
+                id="section-admin-plans"
+                class="page-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h2>Billing Plans</h2>
+
+                    <p>
+                        Manage FIXED and SLAB pricing plans.
+                    </p>
+
+                </div>
+
+                <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-action="load-admin-plans">
+
+                    ↻ Refresh
+
+                </button>
+
+            </div>
+
+
+            <!-- Create plan -->
+
+            <article class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h3>Create billing plan</h3>
+
+                        <p>
+                            Configure fixed pricing or slab pricing.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <form
+                        id="admin-create-plan-form"
+                        class="form-grid">
+
+                    <div class="field">
+
+                        <label for="plan-name">
+                            Name
+                        </label>
+
+                        <input
+                                id="plan-name"
+                                type="text"
+                                required>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="plan-code">
+                            Code
+                        </label>
+
+                        <input
+                                id="plan-code"
+                                type="text"
+                                required>
+
+                    </div>
+
+
+                    <div class="field full">
+
+                        <label for="plan-description">
+                            Description
+                        </label>
+
+                        <textarea
+                                id="plan-description"
+                                rows="3"></textarea>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="plan-type">
+                            Plan type
+                        </label>
+
+                        <select
+                                id="plan-type"
+                                required>
+
+                            <option value="FIXED">
+                                FIXED
+                            </option>
+
+                            <option value="SLAB">
+                                SLAB
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div
+                            id="fixed-price-field"
+                            class="field">
+
+                        <label for="plan-price">
+                            Price per unit
+                        </label>
+
+                        <input
+                                id="plan-price"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                placeholder="25.00">
+
+                    </div>
+
+
+                    <!-- Slab builder -->
+
+                    <div
+                            id="slab-builder"
+                            class="full hidden">
+
+                        <div class="subsection-header">
+
+                            <div>
+
+                                <h4>Slabs</h4>
+
+                                <p>
+                                    Blank upper bound means open-ended final slab.
+                                </p>
+
+                            </div>
+
+                            <button
+                                    type="button"
+                                    class="btn btn-secondary btn-sm"
+                                    data-action="add-slab">
+
+                                ＋ Add slab
+
+                            </button>
+
+                        </div>
+
+
+                        <div
+                                id="slab-rows"
+                                class="slab-list">
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-actions full">
+
+                        <button
+                                type="reset"
+                                class="btn btn-secondary">
+
+                            Clear
+
+                        </button>
+
+                        <button
+                                type="submit"
+                                class="btn btn-primary">
+
+                            Create plan
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </article>
+
+
+            <!-- Plan list -->
+
+            <article class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h3>All billing plans</h3>
+
+                        <p>
+                            Current pricing configurations.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Code</th>
+                            <th>Type</th>
+                            <th>Price</th>
+                            <th>Slabs</th>
+                            <th>Actions</th>
+                        </tr>
+
+                        </thead>
+
+                        <tbody id="admin-plans-table">
+
+                        <tr>
+
+                            <td
+                                    colspan="7"
+                                    class="empty-state">
+
+                                Loading...
+
+                            </td>
+
+                        </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </article>
+
+
+            <!-- Edit plan -->
+
+            <article
+                    id="admin-plan-edit-panel"
+                    class="panel hidden">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h3>Edit billing plan</h3>
+
+                        <p>
+                            Update the selected plan.
+                        </p>
+
+                    </div>
+
+                    <button
+                            type="button"
+                            class="icon-btn"
+                            data-action="close-plan-edit"
+                            aria-label="Close">
+
+                        ×
+
+                    </button>
+
+                </div>
+
+
+                <form
+                        id="admin-edit-plan-form"
+                        class="form-grid">
+
+                    <input
+                            id="edit-plan-id"
+                            type="hidden">
+
+
+                    <div class="field">
+
+                        <label for="edit-plan-name">
+                            Name
+                        </label>
+
+                        <input
+                                id="edit-plan-name"
+                                type="text"
+                                required>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="edit-plan-type">
+                            Plan type
+                        </label>
+
+                        <select
+                                id="edit-plan-type"
+                                required>
+
+                            <option value="FIXED">
+                                FIXED
+                            </option>
+
+                            <option value="SLAB">
+                                SLAB
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="field full">
+
+                        <label for="edit-plan-description">
+                            Description
+                        </label>
+
+                        <textarea
+                                id="edit-plan-description"
+                                rows="3"></textarea>
+
+                    </div>
+
+
+                    <div
+                            id="edit-fixed-price-field"
+                            class="field">
+
+                        <label for="edit-plan-price">
+                            Price per unit
+                        </label>
+
+                        <input
+                                id="edit-plan-price"
+                                type="number"
+                                step="0.01"
+                                min="0">
+
+                    </div>
+
+
+                    <div
+                            id="edit-slab-builder"
+                            class="full hidden">
+
+                        <div class="subsection-header">
+
+                            <div>
+
+                                <h4>Slabs</h4>
+
+                                <p>
+                                    Configure pricing ranges.
+                                </p>
+
+                            </div>
+
+                            <button
+                                    type="button"
+                                    class="btn btn-secondary btn-sm"
+                                    data-action="add-edit-slab">
+
+                                ＋ Add slab
+
+                            </button>
+
+                        </div>
+
+
+                        <div
+                                id="edit-slab-rows"
+                                class="slab-list">
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-actions full">
+
+                        <button
+                                type="button"
+                                class="btn btn-secondary"
+                                data-action="close-plan-edit">
+
+                            Cancel
+
+                        </button>
+
+                        <button
+                                type="submit"
+                                class="btn btn-primary">
+
+                            Update plan
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </article>
+
+        </section>
+
+
+        <!-- =================================================
+             ADMIN INVOICES
+             ================================================= -->
+
+        <section
+                id="section-admin-invoices"
+                class="page-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h2>Invoices</h2>
+
+                    <p>
+                        View invoices available to the administrator.
+                    </p>
+
+                </div>
+
+                <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-action="load-admin-invoices">
+
+                    ↻ Refresh
+
+                </button>
+
+            </div>
+
+
+            <article class="panel">
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+
+                        <tr>
+                            <th>Invoice ID</th>
+                            <th>Customer</th>
+                            <th>Meter</th>
+                            <th>Period</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+
+                        </thead>
+
+                        <tbody id="admin-invoices-table">
+
+                        <tr>
+
+                            <td
+                                    colspan="6"
+                                    class="empty-state">
+
+                                Loading...
+
+                            </td>
+
+                        </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+        <!-- =================================================
+             ADMIN BILLING JOBS
+             ================================================= -->
+
+        <section
+                id="section-admin-billing"
+                class="page-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h2>Billing Jobs</h2>
+
+                    <p>
+                        Start bulk invoice generation and monitor the job.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="content-grid two-columns">
+
+                <!-- Start job -->
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h3>Bulk invoice generation</h3>
+
+                            <p>
+                                Generate invoices for the selected period.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <form
+                            id="admin-generate-form"
+                            class="form-grid">
+
+                        <div class="field">
+
+                            <label for="admin-billing-year">
+                                Year
+                            </label>
+
+                            <input
+                                    id="admin-billing-year"
+                                    type="number"
+                                    min="2000"
+                                    max="2100"
+                                    required>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label for="admin-billing-month">
+                                Month
+                            </label>
+
+                            <select
+                                    id="admin-billing-month"
+                                    required>
+
+                                <option value="1">January</option>
+                                <option value="2">February</option>
+                                <option value="3">March</option>
+                                <option value="4">April</option>
+                                <option value="5">May</option>
+                                <option value="6">June</option>
+                                <option value="7">July</option>
+                                <option value="8">August</option>
+                                <option value="9">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-actions full">
+
+                            <button
+                                    type="submit"
+                                    class="btn btn-primary">
+
+                                Start billing job
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </article>
+
+
+                <!-- Job status -->
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h3>Generation job</h3>
+
+                            <p>
+                                Check a generation job using its job ID.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <form
+                            id="admin-job-status-form"
+                            class="inline-form">
+
+                        <div class="field">
+
+                            <label for="job-id">
+                                Job ID
+                            </label>
+
+                            <input
+                                    id="job-id"
+                                    type="text"
+                                    placeholder="Job ID"
+                                    required>
+
+                        </div>
+
+                        <button
+                                type="submit"
+                                class="btn btn-primary">
+
+                            Check status
+
+                        </button>
+
+                    </form>
+
+
+                    <div
+                            id="job-status-card"
+                            class="job-card hidden">
+
+                        <div class="job-status-header">
+
+                            <span
+                                    id="job-status-badge"
+                                    class="badge">
+
+                                —
+
+                            </span>
+
+                            <strong id="job-status-id">
+                                —
+                            </strong>
+
+                        </div>
+
+
+                        <pre
+                                id="job-status-json"
+                                class="json-view"></pre>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             ADMIN MONITORING
+             ================================================= -->
+
+        <section
+                id="section-admin-monitoring"
+                class="page-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h2>System Monitoring</h2>
+
+                    <p>
+                        Spring Boot Actuator health, info and metrics.
+                    </p>
+
+                </div>
+
+                <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-action="load-monitoring">
+
+                    ↻ Refresh
+
+                </button>
+
+            </div>
+
+
+            <div class="monitor-grid">
+
+                <!-- Health -->
+
+                <article class="monitor-card">
+
+                    <div class="monitor-card-header">
+
+                        <div>
+
+                            <span class="eyebrow">
+                                Health
+                            </span>
+
+                            <h3 id="monitor-health-status">
+                                —
+                            </h3>
+
+                        </div>
+
+                        <span
+                                id="monitor-health-dot"
+                                class="health-dot">
+                        </span>
+
+                    </div>
+
+
+                    <pre
+                            id="monitor-health-json"
+                            class="json-view">
+
+Loading...
+
+                    </pre>
+
+                </article>
+
+
+                <!-- Info -->
+
+                <article class="monitor-card">
+
+                    <div class="monitor-card-header">
+
+                        <div>
+
+                            <span class="eyebrow">
+                                Info
+                            </span>
+
+                            <h3>
+                                Application information
+                            </h3>
+
+                        </div>
+
+                    </div>
+
+
+                    <pre
+                            id="monitor-info-json"
+                            class="json-view">
+
+Loading...
+
+                    </pre>
+
+                </article>
+
+            </div>
+
+
+            <!-- Metrics -->
+
+            <article class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h3>Metrics</h3>
+
+                        <p>
+                            Raw response from the Actuator metrics endpoint.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <pre
+                        id="monitor-metrics-json"
+                        class="json-view large">
+
+Loading...
+
+                </pre>
+
+            </article>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- =========================================================
+     CONFIRMATION MODAL
+     ========================================================= -->
+
+<div
+        id="modal-backdrop"
+        class="modal-backdrop hidden">
+
+    <div
+            id="generic-modal"
+            class="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title">
+
+        <div class="modal-header">
+
+            <div>
+
+                <span
+                        id="modal-eyebrow"
+                        class="eyebrow">
+
+                    Confirmation
+
+                </span>
+
+                <h2 id="modal-title">
+                    Confirm action
+                </h2>
+
+            </div>
+
+            <button
+                    id="modal-close"
+                    type="button"
+                    class="icon-btn"
+                    aria-label="Close">
+
+                ×
+
+            </button>
+
+        </div>
+
+
+        <div
+                id="modal-body"
+                class="modal-body">
+        </div>
+
+
+        <div
+                id="modal-actions"
+                class="modal-actions">
+
+            <button
+                    id="modal-cancel"
+                    type="button"
+                    class="btn btn-secondary">
+
+                Cancel
+
+            </button>
+
+            <button
+                    id="modal-confirm"
+                    type="button"
+                    class="btn btn-danger">
+
+                Confirm
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     TOASTS
+     ========================================================= -->
+
+<div
+        id="toast-container"
+        class="toast-container"
+        aria-live="polite"
+        aria-atomic="true">
+</div>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+     ========================================================= -->
+
+<script src="app.js"></script>
+
+</body>
+</html>

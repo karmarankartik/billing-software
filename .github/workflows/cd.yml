@@ -59,7 +59,7 @@ jobs:
           DB_USERNAME="$2"
           DB_PASSWORD="$3"
 
-          trap 'rm -f /run/billing-secrets.env; rm -rf /tmp/billing-deployment' EXIT
+          trap 'rm -f /tmp/billing-secrets.env; rm -rf /tmp/billing-deployment' EXIT
 
           REPO="karmarankartik/billing-software"
           RAW_BASE="https://raw.githubusercontent.com/$REPO/$SHA"
@@ -85,9 +85,9 @@ jobs:
           printf 'DB_USERNAME=%s\nDB_PASSWORD=%s\n' \
             "$DB_USERNAME" \
             "$DB_PASSWORD" \
-            > /run/billing-secrets.env
+            > /tmp/billing-secrets.env
 
-          chmod 600 /run/billing-secrets.env
+          chmod 600 /tmp/billing-secrets.env
 
           cd /tmp/billing-deployment
 
