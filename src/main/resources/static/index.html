@@ -60,19 +60,6 @@
                 >
             </div>
 
-            <div class="field">
-                <label for="login-role">Dashboard</label>
-
-                <select id="login-role" name="role">
-                    <option value="CUSTOMER">Customer</option>
-                    <option value="ADMIN">Administrator</option>
-                </select>
-
-                <small class="field-help">
-                    Dashboard selection does not bypass backend authorization.
-                </small>
-            </div>
-
             <button type="submit" class="btn btn-primary btn-block">
                 Sign in
             </button>
@@ -147,16 +134,6 @@
 
                 <span class="nav-icon">◫</span>
                 <span>My Meters</span>
-
-            </button>
-
-            <button
-                    class="nav-item"
-                    type="button"
-                    data-section="customer-reading">
-
-                <span class="nav-icon">↗</span>
-                <span>Meter Reading</span>
 
             </button>
 
@@ -239,16 +216,6 @@
 
                 <span class="nav-icon">⇄</span>
                 <span>Assignments</span>
-
-            </button>
-
-            <button
-                    class="nav-item"
-                    type="button"
-                    data-section="admin-readings">
-
-                <span class="nav-icon">↗</span>
-                <span>Meter Readings</span>
 
             </button>
 
@@ -407,7 +374,7 @@
                 <div>
                     <h2>Customer Dashboard</h2>
                     <p>
-                        Manage your water meters, readings and invoices.
+                        Manage your water meters and invoices.
                     </p>
                 </div>
 
@@ -628,11 +595,13 @@
             <div class="section-heading">
 
                 <div>
+
                     <h2>My Water Meters</h2>
 
                     <p>
                         View the meters assigned to your account.
                     </p>
+
                 </div>
 
                 <button
@@ -655,7 +624,6 @@
 
                         <thead>
                         <tr>
-                            <th>Meter ID</th>
                             <th>Meter Number</th>
                             <th>Billing Plan</th>
                             <th>Assignment</th>
@@ -667,7 +635,7 @@
 
                         <tr>
                             <td
-                                    colspan="5"
+                                    colspan="4"
                                     class="empty-state">
 
                                 Loading...
@@ -682,203 +650,6 @@
                 </div>
 
             </article>
-
-        </section>
-
-
-        <!-- =================================================
-             CUSTOMER METER READING
-             ================================================= -->
-
-        <section
-                id="section-customer-reading"
-                class="page-section">
-
-            <div class="section-heading">
-
-                <div>
-
-                    <h2>Submit Meter Reading</h2>
-
-                    <p>
-                        Record a TOTAL or FLOW reading for your meter.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <div class="content-grid two-columns">
-
-                <article class="panel">
-
-                    <div class="panel-header">
-
-                        <div>
-
-                            <h3>New reading</h3>
-
-                            <p>
-                                The backend validates the reading.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <form
-                            id="customer-reading-form"
-                            class="form-grid">
-
-                        <div class="field full">
-
-                            <label for="customer-reading-meter">
-                                Water meter
-                            </label>
-
-                            <select
-                                    id="customer-reading-meter"
-                                    required>
-
-                                <option value="">
-                                    Select meter
-                                </option>
-
-                            </select>
-
-                        </div>
-
-
-                        <div class="field">
-
-                            <label for="customer-reading-type">
-                                Reading type
-                            </label>
-
-                            <select
-                                    id="customer-reading-type"
-                                    required>
-
-                                <option value="TOTAL">
-                                    TOTAL
-                                </option>
-
-                                <option value="FLOW">
-                                    FLOW
-                                </option>
-
-                            </select>
-
-                        </div>
-
-
-                        <div class="field">
-
-                            <label for="customer-reading-value">
-                                Reading value
-                            </label>
-
-                            <input
-                                    id="customer-reading-value"
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    placeholder="0.00"
-                                    required>
-
-                        </div>
-
-
-                        <div class="field">
-
-                            <label for="customer-reading-at">
-                                Reading date/time
-                            </label>
-
-                            <input
-                                    id="customer-reading-at"
-                                    type="datetime-local"
-                                    required>
-
-                        </div>
-
-
-                        <div class="field">
-
-                            <label for="customer-ingestion-key">
-                                Ingestion key
-                            </label>
-
-                            <input
-                                    id="customer-ingestion-key"
-                                    type="text"
-                                    placeholder="Unique ingestion key"
-                                    required>
-
-                        </div>
-
-
-                        <div class="form-actions full">
-
-                            <button
-                                    type="reset"
-                                    class="btn btn-secondary">
-
-                                Clear
-
-                            </button>
-
-                            <button
-                                    type="submit"
-                                    class="btn btn-primary">
-
-                                Submit reading
-
-                            </button>
-
-                        </div>
-
-                    </form>
-
-                </article>
-
-
-                <article class="panel info-panel">
-
-                    <div class="info-icon">
-                        i
-                    </div>
-
-                    <h3>Reading guidance</h3>
-
-                    <ul class="clean-list">
-
-                        <li>
-                            <strong>TOTAL</strong>
-                            represents cumulative meter readings.
-                        </li>
-
-                        <li>
-                            <strong>FLOW</strong>
-                            can be used for flow measurements.
-                        </li>
-
-                        <li>
-                            Backend validation remains authoritative.
-                        </li>
-
-                        <li>
-                            Backend error messages will be shown directly
-                            when a request fails.
-                        </li>
-
-                    </ul>
-
-                </article>
-
-            </div>
 
         </section>
 
@@ -923,7 +694,7 @@
 
                         <thead>
                         <tr>
-                            <th>Invoice ID</th>
+                            <th>Invoice</th>
                             <th>Period</th>
                             <th>Meter</th>
                             <th>Amount</th>
@@ -1319,7 +1090,7 @@
                             <tr>
                                 <th>Meter</th>
                                 <th>Plan</th>
-                                <th>ID</th>
+                                <th>Status</th>
                             </tr>
                             </thead>
 
@@ -1625,7 +1396,7 @@
                             <h3>Lookup user</h3>
 
                             <p>
-                                Fetch a user using their ID.
+                                Search for a user by username.
                             </p>
 
                         </div>
@@ -1640,13 +1411,13 @@
                         <div class="field">
 
                             <label for="user-lookup-id">
-                                User ID
+                                Username
                             </label>
 
                             <input
                                     id="user-lookup-id"
                                     type="text"
-                                    placeholder="UUID"
+                                    placeholder="Enter username"
                                     required>
 
                         </div>
@@ -1692,16 +1463,6 @@
 
 
                         <dl class="definition-grid">
-
-                            <div>
-
-                                <dt>ID</dt>
-
-                                <dd id="user-detail-id">
-                                    —
-                                </dd>
-
-                            </div>
 
                             <div>
 
@@ -2000,7 +1761,7 @@
                             <h3>Meter lookup</h3>
 
                             <p>
-                                Fetch one meter by ID.
+                                Search for a meter by meter number.
                             </p>
 
                         </div>
@@ -2015,12 +1776,13 @@
                         <div class="field">
 
                             <label for="meter-lookup-id">
-                                Meter ID
+                                Meter number
                             </label>
 
                             <input
                                     id="meter-lookup-id"
                                     type="text"
+                                    placeholder="Enter meter number"
                                     required>
 
                         </div>
@@ -2058,16 +1820,6 @@
 
 
                         <dl class="definition-grid">
-
-                            <div>
-
-                                <dt>ID</dt>
-
-                                <dd id="meter-detail-id">
-                                    —
-                                </dd>
-
-                            </div>
 
                             <div>
 
@@ -2147,7 +1899,6 @@
                         <thead>
 
                         <tr>
-                            <th>ID</th>
                             <th>Meter Number</th>
                             <th>Billing Plan</th>
                             <th>Actions</th>
@@ -2160,7 +1911,7 @@
                         <tr>
 
                             <td
-                                    colspan="4"
+                                    colspan="3"
                                     class="empty-state">
 
                                 Loading...
@@ -2328,13 +2079,18 @@
                         <div class="field">
 
                             <label for="assignment-meter-id">
-                                Water meter ID
+                                Water meter
                             </label>
 
-                            <input
+                            <select
                                     id="assignment-meter-id"
-                                    type="text"
                                     required>
+
+                                <option value="">
+                                    Select meter
+                                </option>
+
+                            </select>
 
                         </div>
 
@@ -2342,13 +2098,18 @@
                         <div class="field">
 
                             <label for="assignment-user-id">
-                                Customer user ID
+                                Customer
                             </label>
 
-                            <input
+                            <select
                                     id="assignment-user-id"
-                                    type="text"
                                     required>
+
+                                <option value="">
+                                    Select customer
+                                </option>
+
+                            </select>
 
                         </div>
 
@@ -2390,13 +2151,18 @@
                         <div class="field">
 
                             <label for="unassignment-meter-id">
-                                Water meter ID
+                                Water meter
                             </label>
 
-                            <input
+                            <select
                                     id="unassignment-meter-id"
-                                    type="text"
                                     required>
+
+                                <option value="">
+                                    Select meter
+                                </option>
+
+                            </select>
 
                         </div>
 
@@ -2404,13 +2170,18 @@
                         <div class="field">
 
                             <label for="unassignment-user-id">
-                                Customer user ID
+                                Customer
                             </label>
 
-                            <input
+                            <select
                                     id="unassignment-user-id"
-                                    type="text"
                                     required>
+
+                                <option value="">
+                                    Select customer
+                                </option>
+
+                            </select>
 
                         </div>
 
@@ -2428,143 +2199,6 @@
                 </article>
 
             </div>
-
-        </section>
-
-
-        <!-- =================================================
-             ADMIN READINGS
-             ================================================= -->
-
-        <section
-                id="section-admin-readings"
-                class="page-section">
-
-            <div class="section-heading">
-
-                <div>
-
-                    <h2>Meter Readings</h2>
-
-                    <p>
-                        Record TOTAL or FLOW readings.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <article class="panel narrow-panel">
-
-                <form
-                        id="admin-reading-form"
-                        class="form-grid">
-
-                    <div class="field full">
-
-                        <label for="admin-reading-meter">
-                            Water meter ID
-                        </label>
-
-                        <input
-                                id="admin-reading-meter"
-                                type="text"
-                                required>
-
-                    </div>
-
-
-                    <div class="field">
-
-                        <label for="admin-reading-type">
-                            Reading type
-                        </label>
-
-                        <select
-                                id="admin-reading-type"
-                                required>
-
-                            <option value="TOTAL">
-                                TOTAL
-                            </option>
-
-                            <option value="FLOW">
-                                FLOW
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <div class="field">
-
-                        <label for="admin-reading-value">
-                            Reading value
-                        </label>
-
-                        <input
-                                id="admin-reading-value"
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                required>
-
-                    </div>
-
-
-                    <div class="field">
-
-                        <label for="admin-reading-at">
-                            Reading date/time
-                        </label>
-
-                        <input
-                                id="admin-reading-at"
-                                type="datetime-local"
-                                required>
-
-                    </div>
-
-
-                    <div class="field">
-
-                        <label for="admin-ingestion-key">
-                            Ingestion key
-                        </label>
-
-                        <input
-                                id="admin-ingestion-key"
-                                type="text"
-                                required>
-
-                    </div>
-
-
-                    <div class="form-actions full">
-
-                        <button
-                                type="reset"
-                                class="btn btn-secondary">
-
-                            Clear
-
-                        </button>
-
-                        <button
-                                type="submit"
-                                class="btn btn-primary">
-
-                            Submit reading
-
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </article>
 
         </section>
 
@@ -2796,7 +2430,6 @@
                         <thead>
 
                         <tr>
-                            <th>ID</th>
                             <th>Name</th>
                             <th>Code</th>
                             <th>Type</th>
@@ -2812,7 +2445,7 @@
                         <tr>
 
                             <td
-                                    colspan="7"
+                                    colspan="6"
                                     class="empty-state">
 
                                 Loading...
@@ -3043,7 +2676,6 @@
                         <thead>
 
                         <tr>
-                            <th>Invoice ID</th>
                             <th>Customer</th>
                             <th>Meter</th>
                             <th>Period</th>
@@ -3058,7 +2690,7 @@
                         <tr>
 
                             <td
-                                    colspan="6"
+                                    colspan="5"
                                     class="empty-state">
 
                                 Loading...
@@ -3198,7 +2830,7 @@
                             <h3>Generation job</h3>
 
                             <p>
-                                Check a generation job using its job ID.
+                                Monitor the latest billing generation job.
                             </p>
 
                         </div>
@@ -3206,38 +2838,7 @@
                     </div>
 
 
-                    <form
-                            id="admin-job-status-form"
-                            class="inline-form">
-
-                        <div class="field">
-
-                            <label for="job-id">
-                                Job ID
-                            </label>
-
-                            <input
-                                    id="job-id"
-                                    type="text"
-                                    placeholder="Job ID"
-                                    required>
-
-                        </div>
-
-                        <button
-                                type="submit"
-                                class="btn btn-primary">
-
-                            Check status
-
-                        </button>
-
-                    </form>
-
-
-                    <div
-                            id="job-status-card"
-                            class="job-card hidden">
+                    <div class="job-card">
 
                         <div class="job-status-header">
 
@@ -3259,6 +2860,19 @@
                         <pre
                                 id="job-status-json"
                                 class="json-view"></pre>
+
+                        <div class="form-actions">
+
+                            <button
+                                    id="check-latest-job"
+                                    type="button"
+                                    class="btn btn-secondary">
+
+                                Check latest job
+
+                            </button>
+
+                        </div>
 
                     </div>
 
