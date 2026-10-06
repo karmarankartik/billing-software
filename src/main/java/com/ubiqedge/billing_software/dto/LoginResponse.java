@@ -1,4 +1,4 @@
 package com.ubiqedge.billing_software.dto;
 
-public record LoginResponse(String sessionId) {
+public record LoginResponse(String sessionId,String role) {
 }
