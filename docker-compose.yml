@@ -93,8 +93,8 @@ services:
       retries: 3
       start_period: 30s
 
-    mem_limit: 256m
-    memswap_limit: 256m
+    mem_limit: 384m
+    memswap_limit: 384m
     cpus: "0.75"
 
     # Prefer killing the application over critical host processes
