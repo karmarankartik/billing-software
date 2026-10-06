@@ -45,8 +45,11 @@ services:
     memswap_limit: 256m
     cpus: "0.5"
 
-    # Prefer killing this container over critical host processes.
+    # Prefer killing PostgreSQL over critical host processes
+    # if the host itself comes under memory pressure.
     oom_score_adj: 500
+
+    pids_limit: 128
 
     restart: "no"
 
@@ -65,6 +68,13 @@ services:
       DB_URL: jdbc:postgresql://billing-postgres:5432/billingdb
       DB_USERNAME: ${DB_USERNAME:?DB_USERNAME is required}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+
+      JAVA_TOOL_OPTIONS: >-
+        -Xms32m
+        -Xmx128m
+        -XX:MaxMetaspaceSize=128m
+        -Xss256k
+        -XX:+UseSerialGC
 
     ports:
       - "8080:8080"
@@ -87,8 +97,11 @@ services:
     memswap_limit: 256m
     cpus: "0.75"
 
-    # Prefer killing the application over critical host processes.
+    # Prefer killing the application over critical host processes
+    # if the host itself comes under memory pressure.
     oom_score_adj: 500
+
+    pids_limit: 128
 
     restart: "no"
 
