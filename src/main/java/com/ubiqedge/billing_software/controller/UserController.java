@@ -11,7 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import static com.ubiqedge.billing_software.constant.AppConstant.*;
-
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -90,6 +90,27 @@ public class UserController {
                 )
         );
     }
+
+    @GetMapping
+public ResponseEntity<ApiResponse<List<UserResponse>>> getCustomers(
+        @RequestAttribute("userSession") UserSession userSession,
+        @RequestAttribute("user") User user) {
+
+    List<UserResponse> response =
+            userService.getCustomers(
+                    userSession,
+                    user
+            );
+
+    return ResponseEntity.ok(
+            new ApiResponse<>(
+                    true,
+                    SUCCESS,
+                    HttpStatus.OK,
+                    response
+            )
+    );
+}
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteUser(
